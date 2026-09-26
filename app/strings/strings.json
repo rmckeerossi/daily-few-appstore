@@ -1,10 +1,209 @@
 {
-  "home": {
-    "title": "Hello World",
-    "cta": "Go to app"
+  "answer": {
+    "close": "Close",
+    "newTitle": "New answer",
+    "editTitle": "Edit answer",
+    "writeLabel": "Your answer",
+    "placeholder": "Write as much or as little as you want.",
+    "photosLabel": "Photos · {{count}} of 3",
+    "photosHint": "Up to three. Only you will see them.",
+    "addPhoto": "Add",
+    "removePhoto": "Remove photo",
+    "photoAlt": "Answer photo",
+    "saving": "Saving…",
+    "saveError": "Couldn't save. Your answer is still here.",
+    "unsupportedPhoto": "That file isn't an image.",
+    "tooLargePhoto": "Photos must be under 8 MB.",
+    "uploadTooMany": "You can add up to three photos.",
+    "emptyHelp": "Write something or add a photo to save.",
+    "discardTitle": "Discard this answer?",
+    "discardBody": "Your writing and photos won't be saved.",
+    "keepGoing": "Keep going",
+    "discard": "Discard"
   },
-  "app": {
-    "greeting": "Welcome, {{name}}",
+  "deck": {
+    "chooseCategory": "Choose a category",
+    "chooseCategoryHint": "Pick where you would like to begin.",
+    "categoryEyebrow": "Category",
+    "metaCards": "{{count}} cards",
+    "metaCategories": "{{count}} categories",
+    "progress": "{{answered}} of {{total}}",
+    "allAnswered": "All answered",
+    "descriptionFallback": "A few questions to sit with.",
+    "type": {
+      "monthly": "Monthly",
+      "season": "Season"
+    },
+    "emptyTitle": "No cards yet",
+    "emptyBody": "This deck does not have any cards to pull from yet.",
+    "emptyAction": "Back to library",
+    "notFoundTitle": "Deck not found",
+    "notFoundBody": "We could not find that deck.",
+    "notFoundAction": "Back to library"
+  },
+  "draw": {
+    "skip": "Skip",
+    "reflected": "Reflected",
+    "share": "Share",
+    "reflecting": "Saving",
+    "switchTitle": "Switch category",
+    "switchDesc": "Pick a category to pull from.",
+    "switchCategory": "Switch category",
+    "shareTitle": "Share this question",
+    "shareDesc": "Send this question to someone to sit with.",
+    "shareNote": "Only the question is shared. Never your answer.",
+    "shareLinkLabel": "Link",
+    "doneTitle": "Marked as reflected.",
+    "doneBody": "No words needed. This one is kept quietly.",
+    "drawAnother": "Draw another",
+    "home": "Home",
+    "pastNone": "You haven't answered this one yet.",
+    "pastOnce": "You've answered this once.",
+    "pastCount": "You've answered this {{count}} times.",
+    "reflectedPreview": "Marked as reflected.",
+    "allAnsweredNote": "You've reflected on every card here. The pool has been refreshed.",
+    "emptyTitle": "Nothing to pull here",
+    "emptyBody": "This category has no cards yet. Try another one."
+  },
+  "history": {
+    "eyebrow": "Look back",
+    "title": "Your history",
+    "tab": {
+      "month": "By month",
+      "card": "By card"
+    },
+    "answered": "{{count}} answered",
+    "note": {
+      "eyebrow": "{{month}} note",
+      "empty": "Add a note for this month."
+    },
+    "recap": {
+      "eyebrow": "Monthly recap",
+      "title": "Your {{month}}, looked back on"
+    },
+    "card": {
+      "answers": "{{count}} answers · last {{date}}"
+    },
+    "detail": {
+      "edit": "Edit answer",
+      "delete": "Delete answer",
+      "confirm": "Delete this answer?",
+      "confirmBody": "This answer will be removed for good.",
+      "confirmYes": "Delete",
+      "confirmNo": "Keep it"
+    },
+    "noteSheet": {
+      "label": "Your note",
+      "placeholder": "A few words about this month…",
+      "save": "Save note"
+    },
+    "empty": {
+      "title": "Nothing to look back on yet",
+      "body": "Pull a card and answer it. Your reflections will gather here.",
+      "cta": "Pull a card"
+    },
+    "toast": {
+      "deleted": "Answer deleted.",
+      "noteSaved": "Note saved."
+    }
+  },
+  "home": {
+    "greetingMorning": "Good morning, {{name}}",
+    "greetingAfternoon": "Good afternoon, {{name}}",
+    "greetingEvening": "Good evening, {{name}}",
+    "recapEyebrow": "The month so far",
+    "ringCenterSub": "days until the month turns",
+    "cardEyebrow": "Card of the day",
+    "cardHelper": "A private prompt, chosen for today.",
+    "reflectedAction": "Reflected",
+    "answeredPill": "Answered today",
+    "answeredHelper": "Come back tomorrow for a new one.",
+    "addAnother": "Add another",
+    "reflectedToast": "Marked as reflected.",
+    "monthDeckEyebrow": "This month's deck",
+    "seasonDeckEyebrow": "For your season",
+    "deckMetaMonthly": "{{count}} cards",
+    "deckMetaSeason": "Season deck · {{count}} cards",
+    "emptyCardTitle": "No card today",
+    "emptyCardBody": "Your decks are quiet. Pull one from the library to begin.",
+    "emptyDeckTitle": "No deck yet",
+    "emptyDeckBody": "Add a deck in the library to see it here."
+  },
+  "library": {
+    "eyebrow": "Library",
+    "title": "Pick a deck",
+    "subtitle": "Themed decks of questions to sit with, one at a time.",
+    "segAll": "All",
+    "segMonthly": "Monthly",
+    "segSeason": "Life season",
+    "badgeCurrent": "This month",
+    "badgeSeason": "For your season",
+    "deckMeta": "{{count}} cards",
+    "type": {
+      "monthly": "Monthly",
+      "season": "Life season"
+    },
+    "emptyTitle": "No decks yet",
+    "emptyBody": "Your decks will appear here once they are ready to open.",
+    "emptyMonthlyTitle": "No monthly decks",
+    "emptyMonthlyBody": "There are no monthly decks in this view. Try another filter.",
+    "emptySeasonTitle": "No season decks",
+    "emptySeasonBody": "There are no season decks in this view. Try another filter.",
+    "showAll": "Show all decks"
+  },
+  "nav": {
+    "home": "Home",
+    "library": "Library",
+    "pull": "Pull a card",
+    "history": "History",
+    "profile": "Profile",
+    "menu": "Menu",
     "signOut": "Sign out"
+  },
+  "common": {
+    "appName": "Daily Few",
+    "answer": "Answer",
+    "save": "Save answer",
+    "cancel": "Cancel",
+    "back": "Back",
+    "privateNote": "Only you can see this."
+  },
+  "profile": {
+    "eyebrow": "Profile",
+    "seasonTitle": "Season of life",
+    "seasonCaption": "Changes which deck we recommend on home.",
+    "season": {
+      "change": "A season of change",
+      "rest": "A season of rest",
+      "growth": "A season of growth",
+      "grief": "A season of grief",
+      "beginnings": "A season of new beginnings",
+      "inBetween": "Somewhere in between"
+    },
+    "remindersTitle": "Reminders and updates",
+    "dailyReminderLabel": "Daily reminder",
+    "dailyReminderHint": "A gentle nudge to pull today's card.",
+    "reminderTimeLabel": "Reminder time",
+    "time": {
+      "morning": "7:30 AM",
+      "midday": "12:30 PM",
+      "evening": "8:00 PM",
+      "night": "9:30 PM"
+    },
+    "emailLabel": "Email updates",
+    "emailHint": "Occasional notes on new decks.",
+    "textLabel": "Text updates",
+    "textHint": "A reminder by message when you ask for one.",
+    "accountTitle": "Account",
+    "reflectionsStat": "Reflections",
+    "memberStat": "Member",
+    "signOut": "Sign out",
+    "deleteAccount": "Delete account",
+    "deleteTitle": "Delete your account?",
+    "deleteBody": "This clears every answer and monthly note you have written. This cannot be undone.",
+    "deleteKeep": "Keep my account",
+    "deleteConfirm": "Delete everything",
+    "savedToast": "Saved.",
+    "deletedToast": "Your reflections were deleted."
   }
 }

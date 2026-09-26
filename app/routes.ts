@@ -4,7 +4,16 @@ import { stencilMcpRoutes } from "./.stencil/react-router/mcp/routes";
 
 export default [
   index("routes/home.tsx"),
-  route("app", "routes/app.tsx"),
+  route("app", "routes/app.tsx", [
+    index("routes/app._index.tsx"),
+    route("library", "routes/app.library.tsx"),
+    route("decks/:id", "routes/app.decks.$id.tsx"),
+    route("draw", "routes/app.draw.tsx"),
+    route("answer", "routes/app.answer.tsx"),
+    route("history", "routes/app.history.tsx"),
+    route("profile", "routes/app.profile.tsx"),
+  ]),
+  route("api/files/*", "routes/api.files.$.tsx"),
   // Trusted route the platform calls to run recurring actions (bearer-gated).
   // Keep it registered at this path.
   route("api/internal/scheduled", "routes/api.internal.scheduled.tsx"),

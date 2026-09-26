@@ -4,11 +4,36 @@ Full-stack web app using React Router 7, Tailwind CSS, and Cloudflare Workers.
 
 ## About this app
 
-Not written yet. On this app's first build, replace this paragraph with the app's
-purpose, its main flows, and the mechanism it chose for each big job — how it
-renders, exports, sends, syncs — one plain-English line each. Ten to twenty lines,
-no code: the app builder reads this section too. Keep it current — a turn that
-introduces, replaces or removes a mechanism updates this section in the same turn.
+Daily Few is a private, solo daily-reflection app. A person pulls question cards from
+themed decks, answers them privately, and looks back on their answers month by month.
+It is built to match a supplied Claude Design export exactly (dark "night" theme).
+
+- Look & feel: always dark (#280E1A) with a top plum glow and a static star field. It
+  renders as a centered ~430px mobile column (a phone app on the web), never a desktop
+  layout. Two light surfaces only: bottom sheets and the (shelved) shared web page.
+- Fonts are self-hosted WOFF2 in /assets/fonts (Cormorant Garamond display, Jost body,
+  IBM Plex Mono labels), declared via @font-face at the top of app/theme.css.
+- Design language lives in app/components/design.tsx (PhoneShell, StarField, Eyebrow,
+  QuestionCard, DeckRowCard, DeckTile, SegmentedControl, MonthRing, RoundIconButton,
+  buttons, Toast, StatTile). Every screen composes these — never re-implements them.
+- Data: five tables — decks, cards (question + category + isCardOfDay), answers (with a
+  questionText/deckName/categoryName snapshot + month "YYYY-MM" + reflected flag +
+  photos), monthly-notes, settings (season + reminder toggles). Everything scoped by
+  created_by. Icons are react-icons Lucide (`lu`) only.
+- Main flows: Home (greeting, month ring countdown, card of the day, deck rows) → Library
+  (deck tiles) → Deck (categories + progress) → Draw (random unanswered card, skip is
+  client-only, "reflected" saves a content-free answer) → Answer (text + photo upload +
+  save) → History (by month / by card, monthly note editor, answer detail sheet) →
+  Profile (season chips, reminder switches, sign out, delete).
+- Card of the day: same for everyone, chosen deterministically by date from isCardOfDay
+  cards (index = day-of-year % count), computed in the loader. All dates/greetings are
+  computed server-side and passed as strings to avoid hydration mismatches.
+- Photos: uploaded to R2 via ~stencil/storage, keys stored in answers.photos (JSON), and
+  served/resized through app/routes/api.files.$.tsx.
+- SHELVED (on the backlog): voice-memo recording, the share-card sheet + public shared
+  web page, the monthly recap screen, the under-18 signup gate, and the custom sign-up
+  form (auth is platform-hosted).
+
 Everything below this section is Stencil's platform documentation.
 
 ## Platform-managed — don't touch
