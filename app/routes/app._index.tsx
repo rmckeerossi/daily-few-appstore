@@ -15,6 +15,7 @@ import { Text } from "~stencil/ui/strings";
 import type { StringKey } from "~stencil/ui/strings";
 import { decks, cards, answers, settings } from "~/generated/db-schema";
 import {
+  PhoneShell,
   Eyebrow,
   DisplayTitle,
   QuestionCard,
@@ -336,124 +337,126 @@ export default function HomeScreen({ loaderData }: Route.ComponentProps) {
   } = loaderData;
 
   return (
-    <div className="flex flex-col gap-10">
-      {/* header row */}
-      <header className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-3">
-          <span className="font-mono text-[11px] uppercase tracking-[.16em] text-[var(--df-text-label)]">
-            {dateLabel}
-          </span>
-          <DisplayTitle
-            as="h1"
-            className="text-[34px] leading-[1.08] font-light text-foreground"
-          >
-            <Text id={greetingKey as StringKey} vars={{ name }} />
-          </DisplayTitle>
-        </div>
-        <img
-          src="/assets/submark-white.png"
-          alt="Daily Few"
-          width={40}
-          height={40}
-          className="mt-1 h-9 w-9 shrink-0 opacity-90"
-        />
-      </header>
-
-      {/* month ring */}
-      <section className="flex flex-col items-center gap-4">
-        <Eyebrow className="self-start">
-          <Text id="home.recapEyebrow" />
-        </Eyebrow>
-        <MonthRing
-          monthLabel={monthLabel}
-          centerBig={daysUntilTurn}
-          centerSub={<Text id="home.ringCenterSub" />}
-          days={ringDays}
-        />
-      </section>
-
-      {/* card of the day */}
-      {cardOfDay ? (
-        <CardOfDay
-          card={cardOfDay}
-          answered={cardOfDayAnsweredToday}
-          monthKey={monthKey}
-        />
-      ) : (
-        <section className="flex flex-col gap-4">
-          <div className="flex items-center gap-2">
-            <LuMoon size={14} className="text-[var(--df-lilac)]" />
-            <Eyebrow>
-              <Text id="home.cardEyebrow" />
-            </Eyebrow>
+    <PhoneShell>
+      <div className="flex flex-col gap-10">
+        {/* header row */}
+        <header className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-3">
+            <span className="font-mono text-[11px] uppercase tracking-[.16em] text-[var(--df-text-label)]">
+              {dateLabel}
+            </span>
+            <DisplayTitle
+              as="h1"
+              className="text-[34px] leading-[1.08] font-light text-foreground"
+            >
+              <Text id={greetingKey as StringKey} vars={{ name }} />
+            </DisplayTitle>
           </div>
-          <EmptyBlock
-            icon={<LuMoon size={48} />}
-            titleId="home.emptyCardTitle"
-            bodyId="home.emptyCardBody"
+          <img
+            src="/assets/submark-white.png"
+            alt="Daily Few"
+            width={40}
+            height={40}
+            className="mt-1 h-9 w-9 shrink-0 opacity-90"
           />
-        </section>
-      )}
+        </header>
 
-      {/* this month's deck */}
-      <section className="flex flex-col gap-4">
-        <Eyebrow>
-          <Text id="home.monthDeckEyebrow" />
-        </Eyebrow>
-        {monthDeck ? (
-          <Link
-            to={`/app/decks/${monthDeck.id}`}
-            className={cn("block transition-transform active:translate-y-px")}
-          >
-            <DeckRowCard
-              name={monthDeck.name}
-              description={monthDeck.description}
-              meta={
-                <Text
-                  id="home.deckMetaMonthly"
-                  vars={{ count: monthDeck.cardCount }}
-                />
-              }
-              artStyle={monthDeck.artStyle}
-            />
-          </Link>
-        ) : (
-          <EmptyBlock
-            icon={<LuLayers size={48} />}
-            titleId="home.emptyDeckTitle"
-            bodyId="home.emptyDeckBody"
-          />
-        )}
-      </section>
-
-      {/* season deck */}
-      {seasonDeck ? (
-        <section className="flex flex-col gap-4">
-          <Eyebrow className="inline-flex items-center gap-1.5">
-            <Text id="home.seasonDeckEyebrow" />
-            {season ? <span className="text-[var(--df-lilac)]">· {season}</span> : null}
+        {/* month ring */}
+        <section className="flex flex-col items-center gap-4">
+          <Eyebrow className="self-start">
+            <Text id="home.recapEyebrow" />
           </Eyebrow>
-          <Link
-            to={`/app/decks/${seasonDeck.id}`}
-            className="block transition-transform active:translate-y-px"
-          >
-            <DeckRowCard
-              name={seasonDeck.name}
-              description={seasonDeck.description}
-              meta={
-                <span className="inline-flex items-center gap-1.5">
-                  <Text
-                    id="home.deckMetaSeason"
-                    vars={{ count: seasonDeck.cardCount }}
-                  />
-                  <LuArrowRight size={12} />
-                </span>
-              }
-              artStyle={seasonDeck.artStyle}
-            />
-          </Link>
+          <MonthRing
+            monthLabel={monthLabel}
+            centerBig={daysUntilTurn}
+            centerSub={<Text id="home.ringCenterSub" />}
+            days={ringDays}
+          />
         </section>
-      ) : null}
-    </div>
+
+        {/* card of the day */}
+        {cardOfDay ? (
+          <CardOfDay
+            card={cardOfDay}
+            answered={cardOfDayAnsweredToday}
+            monthKey={monthKey}
+          />
+        ) : (
+          <section className="flex flex-col gap-4">
+            <div className="flex items-center gap-2">
+              <LuMoon size={14} className="text-[var(--df-lilac)]" />
+              <Eyebrow>
+                <Text id="home.cardEyebrow" />
+              </Eyebrow>
+            </div>
+            <EmptyBlock
+              icon={<LuMoon size={48} />}
+              titleId="home.emptyCardTitle"
+              bodyId="home.emptyCardBody"
+            />
+          </section>
+        )}
+
+        {/* this month's deck */}
+        <section className="flex flex-col gap-4">
+          <Eyebrow>
+            <Text id="home.monthDeckEyebrow" />
+          </Eyebrow>
+          {monthDeck ? (
+            <Link
+              to={`/app/decks/${monthDeck.id}`}
+              className={cn("block transition-transform active:translate-y-px")}
+            >
+              <DeckRowCard
+                name={monthDeck.name}
+                description={monthDeck.description}
+                meta={
+                  <Text
+                    id="home.deckMetaMonthly"
+                    vars={{ count: monthDeck.cardCount }}
+                  />
+                }
+                artStyle={monthDeck.artStyle}
+              />
+            </Link>
+          ) : (
+            <EmptyBlock
+              icon={<LuLayers size={48} />}
+              titleId="home.emptyDeckTitle"
+              bodyId="home.emptyDeckBody"
+            />
+          )}
+        </section>
+
+        {/* season deck */}
+        {seasonDeck ? (
+          <section className="flex flex-col gap-4">
+            <Eyebrow className="inline-flex items-center gap-1.5">
+              <Text id="home.seasonDeckEyebrow" />
+              {season ? <span className="text-[var(--df-lilac)]">· {season}</span> : null}
+            </Eyebrow>
+            <Link
+              to={`/app/decks/${seasonDeck.id}`}
+              className="block transition-transform active:translate-y-px"
+            >
+              <DeckRowCard
+                name={seasonDeck.name}
+                description={seasonDeck.description}
+                meta={
+                  <span className="inline-flex items-center gap-1.5">
+                    <Text
+                      id="home.deckMetaSeason"
+                      vars={{ count: seasonDeck.cardCount }}
+                    />
+                    <LuArrowRight size={12} />
+                  </span>
+                }
+                artStyle={seasonDeck.artStyle}
+              />
+            </Link>
+          </section>
+        ) : null}
+      </div>
+    </PhoneShell>
   );
 }

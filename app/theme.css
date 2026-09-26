@@ -275,3 +275,24 @@
   /* ── spacing ──────────────────────────────────────────────────── */
   --spacing-base: 0.25rem;
 }
+
+/* Stencil Tweaks */
+@font-face {
+  font-family: 'IvarDisplayCondensed Medium';
+  src: url('/assets/fonts/IvarDisplayCondensed-Medium.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'NHaasGroteskDSPro 55Rg';
+  src: url('/assets/fonts/NHaasGroteskDSPro-55Rg.otf') format('opentype');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root {
+  --font-display: 'IvarDisplayCondensed Medium', sans-serif;
+  --font-sans: 'NHaasGroteskDSPro 55Rg', sans-serif;
+}
+/* /Stencil Tweaks */
