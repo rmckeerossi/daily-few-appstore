@@ -1,0 +1,40 @@
+{
+  "migrations": [
+    {
+      "id": "remotion-route",
+      "at": 1790446393407
+    },
+    {
+      "id": "app-hook-files",
+      "at": 1790446393417
+    },
+    {
+      "id": "remotion:4.0.522",
+      "at": 1790446393420
+    },
+    {
+      "id": "typecheck-force",
+      "at": 1790446393420
+    },
+    {
+      "id": "wrangler-pin",
+      "at": 1790446393420
+    },
+    {
+      "id": "layer-config",
+      "at": 1790446393425
+    },
+    {
+      "id": "typescript-7",
+      "at": 1790446393426
+    },
+    {
+      "id": "source-tagger",
+      "at": 1790446395779
+    },
+    {
+      "id": "source-tagger-tsconfig",
+      "at": 1790446395780
+    }
+  ]
+}
