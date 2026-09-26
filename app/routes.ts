@@ -4,6 +4,7 @@ import { stencilMcpRoutes } from "./.stencil/react-router/mcp/routes";
 
 export default [
   index("routes/home.tsx"),
+  route("welcome", "routes/welcome.tsx"),
   route("app", "routes/app.tsx", [
     index("routes/app._index.tsx"),
     route("library", "routes/app.library.tsx"),

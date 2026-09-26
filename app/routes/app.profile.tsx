@@ -68,6 +68,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
   return {
     user,
+    displayName: row?.fullName ?? user.name ?? "",
     settings: {
       season: row?.season ?? "",
       dailyReminder: row?.dailyReminder ?? false,
@@ -159,7 +160,7 @@ export default function Profile({ loaderData }: Route.ComponentProps) {
 }
 
 function ProfileContent({ loaderData }: { loaderData: Route.ComponentProps["loaderData"] }) {
-  const { user, settings: s, reflectionsCount, memberSince } = loaderData;
+  const { user, displayName, settings: s, reflectionsCount, memberSince } = loaderData;
 
   const seasonFetcher = useFetcher<typeof action>();
   const dailyFetcher = useFetcher<typeof action>();
@@ -194,7 +195,7 @@ function ProfileContent({ loaderData }: { loaderData: Route.ComponentProps["load
   const submit = (fetcher: ReturnType<typeof useFetcher>, intent: string, value: string) =>
     fetcher.submit({ intent, value }, { method: "post" });
 
-  const initial = (user.name ?? user.email ?? "?").trim().charAt(0).toUpperCase();
+  const initial = (displayName || user.email || "?").trim().charAt(0).toUpperCase();
 
   return (
     <div className="flex flex-col gap-10">
@@ -212,7 +213,7 @@ function ProfileContent({ loaderData }: { loaderData: Route.ComponentProps["load
           {initial}
         </div>
         <div className="flex flex-col gap-1">
-          <DisplayTitle className="text-[32px] leading-[1.06]">{user.name ?? "You"}</DisplayTitle>
+          <DisplayTitle className="text-[32px] leading-[1.06]">{displayName || "You"}</DisplayTitle>
           <p className="font-sans text-[13px] text-[rgba(254,252,242,.72)]">{user.email}</p>
         </div>
         <div className="grid w-full grid-cols-2 gap-3 pt-2">

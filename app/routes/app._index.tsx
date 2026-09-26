@@ -160,7 +160,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const season = settingRows[0]?.season ?? seasonRaw?.season ?? "";
 
   return {
-    name: user.name?.split(" ")[0] ?? "there",
+    name: (settingRows[0]?.fullName ?? user.name)?.split(" ")[0] || "there",
     greetingKey,
     dateLabel,
     monthLabel,

@@ -62,9 +62,14 @@ export const monthlyNotes = sqliteTable("monthly-notes", {
 /** Table for the "settings" entity (Settings) */
 export const settings = sqliteTable("settings", {
   id: text("id").primaryKey(),
+  birthday: text("birthday"),
+  consentedAt: text("consented_at"),
   createdBy: text("created_by").notNull(),
   dailyReminder: integer("daily_reminder", { mode: "boolean" }),
   emailUpdates: integer("email_updates", { mode: "boolean" }),
+  fullName: text("full_name"),
+  onboardedAt: text("onboarded_at"),
+  phone: text("phone"),
   reminderTime: text("reminder_time"),
   season: text("season"),
   textUpdates: integer("text_updates", { mode: "boolean" }),

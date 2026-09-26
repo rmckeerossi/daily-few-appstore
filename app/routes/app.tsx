@@ -1,4 +1,5 @@
-import { Link, NavLink, Outlet, useLocation } from "react-router";
+import { Link, NavLink, Outlet, redirect, useLocation } from "react-router";
+import { eq } from "drizzle-orm";
 import {
   LuMoon,
   LuLayers,
@@ -6,6 +7,8 @@ import {
   LuBookOpen,
   LuUserRound,
 } from "react-icons/lu";
+import { createDb } from "~stencil/db";
+import { settings } from "~/generated/db-schema";
 import { requireAuth } from "~stencil/auth/server";
 import { AuthProvider, useAuth } from "~stencil/ui/auth/context";
 import { SignOutButton } from "~stencil/ui/auth/sign-out-button";
@@ -23,6 +26,18 @@ import type { Route } from "./+types/app";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const { user } = await requireAuth(request, context.cloudflare.env);
+  const db = createDb(context.cloudflare.env);
+
+  // Everyone passes through the onboarding form (name, birthday, phone, season,
+  // consent) once. Until it's completed, /app sends them to /welcome — which also
+  // holds the under-18 gate for anyone whose recorded birthday is too young.
+  const [row] = await db
+    .select({ onboardedAt: settings.onboardedAt })
+    .from(settings)
+    .where(eq(settings.createdBy, user.id))
+    .limit(1);
+  if (!row?.onboardedAt) throw redirect("/welcome");
+
   return { user };
 }
 

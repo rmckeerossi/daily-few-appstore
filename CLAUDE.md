@@ -19,8 +19,18 @@ It is built to match a supplied Claude Design export exactly (dark "night" theme
 - Data: five tables — decks, cards (question + category + isCardOfDay), answers (with a
   questionText/deckName/categoryName snapshot + month "YYYY-MM" + reflected flag +
   photos + voiceMemo R2 key + voiceDuration seconds), monthly-notes, settings (season +
-  reminder toggles). Everything scoped by created_by. Icons are react-icons Lucide (`lu`) only.
-- Main flows: Home (greeting, month ring countdown, card of the day, deck rows) → Library
+  reminder toggles + onboarding fields: fullName, birthday "YYYY-MM-DD", phone,
+  consentedAt, onboardedAt). Everything scoped by created_by. Icons are react-icons Lucide (`lu`) only.
+- Onboarding: platform auth (email/Google, hosted) handles the actual sign-up; NEVER
+  instantiate betterAuth. The design's custom sign-up form is a one-time onboarding screen
+  layered on top at /welcome (routes/welcome.tsx) — collects name, birthday, phone, season
+  chips, consent, all saved onto the settings row. The /app layout loader redirects to
+  /welcome until settings.onboardedAt is set. Under-18 gate: age is computed in UTC from
+  birthday; a minor's row saves everything EXCEPT onboardedAt, so /welcome shows a "come
+  back at 18" gate on every visit and they can never reach /app. fullName is preferred over
+  user.name for the Home greeting and Profile header.
+- Main flows: /welcome onboarding (once, with age gate) → Home (greeting, month ring
+  countdown, card of the day, deck rows) → Library
   (deck tiles) → Deck (categories + progress) → Draw (random unanswered card, skip is
   client-only, "reflected" saves a content-free answer) → Answer (text + voice-memo
   recording + photo upload + save) → History (by month / by card, monthly note editor,
@@ -36,9 +46,8 @@ It is built to match a supplied Claude Design export exactly (dark "night" theme
   stored in answers.voiceMemo with answers.voiceDuration (seconds). Served for playback
   (with Range support) through the same api.files route; played back in the History
   answer-detail sheet.
-- SHELVED (on the backlog): the share-card sheet + public shared web page, the monthly
-  recap screen, the under-18 signup gate, and the custom sign-up form (auth is
-  platform-hosted).
+- SHELVED (on the backlog): the share-card sheet + public shared web page, and the monthly
+  recap screen.
 
 Everything below this section is Stencil's platform documentation.
 
