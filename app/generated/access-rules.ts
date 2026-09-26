@@ -17,6 +17,8 @@ export const accessRules: AccessRules = {
         "question_text": "text",
         "reflected": "integer",
         "text": "text",
+        "voice_duration": "real",
+        "voice_memo": "text",
         "created_at": "text",
         "updated_at": "text"
       },

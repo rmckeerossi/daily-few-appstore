@@ -1,12 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useFetcher } from "react-router";
 import {
   LuPenLine,
   LuImage,
+  LuMic,
   LuCheck,
   LuChevronRight,
   LuArrowRight,
   LuPencil,
+  LuPlay,
+  LuPause,
   LuTrash2,
   LuInbox,
 } from "react-icons/lu";
@@ -55,6 +58,9 @@ type AnswerRow = {
   hasText: boolean;
   hasPhotos: boolean;
   photos: string[];
+  hasVoice: boolean;
+  voiceMemo: string | null;
+  voiceLabel: string;
   monthAbbr: string;
   day: string;
   detailDate: string;
@@ -111,6 +117,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const created = new Date(r.createdAt);
     const photos = Array.isArray(r.photos) ? (r.photos as string[]) : [];
     const text = (r.text ?? "").toString();
+    const voiceSecs = r.voiceDuration ? Math.round(r.voiceDuration) : 0;
+    const voiceLabel = `${Math.floor(voiceSecs / 60)}:${String(voiceSecs % 60).padStart(2, "0")}`;
     return {
       id: r.id,
       cardId: r.cardId,
@@ -122,6 +130,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       hasText: text.trim().length > 0,
       hasPhotos: photos.length > 0,
       photos,
+      hasVoice: !!r.voiceMemo,
+      voiceMemo: r.voiceMemo ?? null,
+      voiceLabel,
       monthAbbr: abbrFmt.format(created).toUpperCase(),
       day: dayFmt.format(created),
       detailDate: `${abbrFmt.format(created)} ${dayFmt.format(created)}`,
@@ -236,8 +247,57 @@ function FormatIcons({ row }: { row: AnswerRow }) {
   return (
     <div className="flex items-center gap-2" aria-hidden="true" style={{ color: LILAC }}>
       {row.hasText && <LuPenLine size={14} />}
+      {row.hasVoice && <LuMic size={14} />}
       {row.hasPhotos && <LuImage size={14} />}
       {row.reflected && <LuCheck size={14} />}
+    </div>
+  );
+}
+
+function VoicePlayer({ src, label }: { src: string; label: string }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+  return (
+    <div
+      className="flex items-center gap-3 rounded-full border py-2.5 pl-2.5 pr-4"
+      style={{ borderColor: "rgba(76,28,49,.18)", background: "rgba(76,28,49,.05)" }}
+    >
+      <audio
+        ref={audioRef}
+        src={src}
+        className="hidden"
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onEnded={() => setPlaying(false)}
+      />
+      <button
+        type="button"
+        onClick={() => {
+          const a = audioRef.current;
+          if (!a) return;
+          if (playing) a.pause();
+          else void a.play();
+        }}
+        className="flex h-10 w-10 flex-none items-center justify-center rounded-full transition-transform active:translate-y-px"
+        style={{ background: "var(--df-burgundy)", color: "var(--df-cream)" }}
+      >
+        {playing ? <LuPause size={17} fill="currentColor" /> : <LuPlay size={17} fill="currentColor" />}
+        <Text id={playing ? "history.detail.voicePause" : "history.detail.voicePlay"} as="span" className="sr-only" />
+      </button>
+      <div className="min-w-0 flex-1">
+        <Text
+          id="history.detail.voice"
+          as="p"
+          className="font-mono text-[10px] uppercase tracking-[.16em]"
+          style={{ color: "var(--df-burgundy-500)" }}
+        />
+        <p
+          className="mt-0.5 font-mono text-[13px] [font-variant-numeric:tabular-nums]"
+          style={{ color: "var(--df-burgundy-700)" }}
+        >
+          {label}
+        </p>
+      </div>
     </div>
   );
 }
@@ -555,12 +615,19 @@ export default function History({ loaderData }: Route.ComponentProps) {
                   <p className="whitespace-pre-wrap text-[16px] leading-[1.7]" style={{ color: "var(--df-burgundy-700)" }}>
                     {detail.text}
                   </p>
-                ) : (
+                ) : !detail.hasVoice && !detail.hasPhotos ? (
                   <Text
                     id="common.privateNote"
                     as="p"
                     className="text-[14px] italic"
                     style={{ color: "var(--df-burgundy-600)" }}
+                  />
+                ) : null}
+
+                {detail.hasVoice && detail.voiceMemo && (
+                  <VoicePlayer
+                    src={`/api/files/${detail.voiceMemo}`}
+                    label={detail.voiceLabel}
                   />
                 )}
 

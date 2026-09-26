@@ -15,9 +15,17 @@
     "unsupportedPhoto": "That file isn't an image.",
     "tooLargePhoto": "Photos must be under 8 MB.",
     "uploadTooMany": "You can add up to three photos.",
-    "emptyHelp": "Write something or add a photo to save.",
+    "voiceLabel": "Voice memo · up to 5 min",
+    "voiceRecord": "Record voice memo",
+    "voiceStop": "Stop recording",
+    "voicePlay": "Play voice memo",
+    "voicePause": "Pause voice memo",
+    "voiceDelete": "Delete voice memo",
+    "voiceUnsupported": "Voice recording isn't available on this device.",
+    "voicePermission": "Microphone access was blocked. Allow it to record.",
+    "emptyHelp": "Write something, record a memo, or add a photo to save.",
     "discardTitle": "Discard this answer?",
-    "discardBody": "Your writing and photos won't be saved.",
+    "discardBody": "Your writing, recording and photos won't be saved.",
     "keepGoing": "Keep going",
     "discard": "Discard"
   },
@@ -90,7 +98,10 @@
       "confirm": "Delete this answer?",
       "confirmBody": "This answer will be removed for good.",
       "confirmYes": "Delete",
-      "confirmNo": "Keep it"
+      "confirmNo": "Keep it",
+      "voice": "Voice memo",
+      "voicePlay": "Play voice memo",
+      "voicePause": "Pause voice memo"
     },
     "noteSheet": {
       "label": "Your note",

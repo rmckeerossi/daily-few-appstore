@@ -18,21 +18,27 @@ It is built to match a supplied Claude Design export exactly (dark "night" theme
   buttons, Toast, StatTile). Every screen composes these — never re-implements them.
 - Data: five tables — decks, cards (question + category + isCardOfDay), answers (with a
   questionText/deckName/categoryName snapshot + month "YYYY-MM" + reflected flag +
-  photos), monthly-notes, settings (season + reminder toggles). Everything scoped by
-  created_by. Icons are react-icons Lucide (`lu`) only.
+  photos + voiceMemo R2 key + voiceDuration seconds), monthly-notes, settings (season +
+  reminder toggles). Everything scoped by created_by. Icons are react-icons Lucide (`lu`) only.
 - Main flows: Home (greeting, month ring countdown, card of the day, deck rows) → Library
   (deck tiles) → Deck (categories + progress) → Draw (random unanswered card, skip is
-  client-only, "reflected" saves a content-free answer) → Answer (text + photo upload +
-  save) → History (by month / by card, monthly note editor, answer detail sheet) →
-  Profile (season chips, reminder switches, sign out, delete).
+  client-only, "reflected" saves a content-free answer) → Answer (text + voice-memo
+  recording + photo upload + save) → History (by month / by card, monthly note editor,
+  answer detail sheet with voice playback) → Profile (season chips, reminder switches,
+  sign out, delete).
 - Card of the day: same for everyone, chosen deterministically by date from isCardOfDay
   cards (index = day-of-year % count), computed in the loader. All dates/greetings are
   computed server-side and passed as strings to avoid hydration mismatches.
 - Photos: uploaded to R2 via ~stencil/storage, keys stored in answers.photos (JSON), and
   served/resized through app/routes/api.files.$.tsx.
-- SHELVED (on the backlog): voice-memo recording, the share-card sheet + public shared
-  web page, the monthly recap screen, the under-18 signup gate, and the custom sign-up
-  form (auth is platform-hosted).
+- Voice memos: recorded client-side on the Answer screen with the browser MediaRecorder
+  API (up to 5 min), uploaded as one file through the same Answer save action to R2, key
+  stored in answers.voiceMemo with answers.voiceDuration (seconds). Served for playback
+  (with Range support) through the same api.files route; played back in the History
+  answer-detail sheet.
+- SHELVED (on the backlog): the share-card sheet + public shared web page, the monthly
+  recap screen, the under-18 signup gate, and the custom sign-up form (auth is
+  platform-hosted).
 
 Everything below this section is Stencil's platform documentation.
 

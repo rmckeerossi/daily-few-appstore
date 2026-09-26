@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { redirect, useFetcher, useNavigate } from "react-router";
-import { LuX, LuPlus, LuLock } from "react-icons/lu";
+import { LuX, LuPlus, LuLock, LuMic, LuSquare, LuPlay, LuPause, LuTrash2 } from "react-icons/lu";
 import type { Route } from "./+types/app.answer";
 import { requireAuth } from "~stencil/auth/server";
 import { createDb } from "~stencil/db";
@@ -23,6 +23,16 @@ import { cn } from "~/lib/utils";
 const ALLOWED_PHOTO_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
 const MAX_PHOTO_BYTES = 8 * 1024 * 1024;
 const MAX_PHOTOS = 3;
+const MAX_VOICE_BYTES = 25 * 1024 * 1024;
+const MAX_VOICE_SECONDS = 300;
+
+// Waveform silhouette from the design export — 26 fixed bar heights.
+const WAVE_HEIGHTS = [8, 14, 22, 12, 26, 18, 10, 20, 28, 16, 9, 24, 14, 30, 18, 12, 22, 8, 16, 26, 12, 20, 10, 18, 24, 14];
+
+function mmss(total: number): string {
+  const s = Math.max(0, Math.floor(total));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
 
 function normalizePhotos(value: unknown): string[] {
   if (Array.isArray(value)) return value.filter((v): v is string => typeof v === "string");
@@ -67,6 +77,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       categoryName: row.categoryName,
       text: row.text ?? "",
       photos: normalizePhotos(row.photos),
+      voiceMemo: row.voiceMemo ?? null,
+      voiceDuration: row.voiceDuration ? Math.round(row.voiceDuration) : 0,
       month: row.month,
     };
   }
@@ -92,6 +104,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       categoryName: card.category,
       text: "",
       photos: [] as string[],
+      voiceMemo: null as string | null,
+      voiceDuration: 0,
       month,
     };
   }
@@ -135,7 +149,30 @@ export async function action({ request, context }: Route.ActionArgs) {
     photoKeys.push(key);
   }
 
-  if (!text && photoKeys.length === 0) {
+  // Voice memo: keep the existing recording, replace it with a fresh upload, or
+  // (neither field present) clear it.
+  const keptVoice = form.get("keptVoice") ? String(form.get("keptVoice")) : null;
+  const voiceFile = form.get("voice");
+  const newVoice = voiceFile instanceof File && voiceFile.size > 0 ? voiceFile : null;
+  let voiceKey: string | null = keptVoice;
+
+  if (newVoice) {
+    if (!newVoice.type.startsWith("audio/") || newVoice.size > MAX_VOICE_BYTES) {
+      return { ok: false as const };
+    }
+    const key = `answers/${user.id}/voice-${crypto.randomUUID()}.webm`;
+    await storage.put(key, newVoice, {
+      httpMetadata: { contentType: newVoice.type },
+    });
+    voiceKey = key;
+  }
+
+  const rawDuration = Number(form.get("voiceDuration") ?? 0);
+  const voiceDuration = voiceKey
+    ? Math.min(MAX_VOICE_SECONDS, Math.max(0, Math.round(rawDuration)))
+    : null;
+
+  if (!text && photoKeys.length === 0 && !voiceKey) {
     return { ok: false as const };
   }
 
@@ -144,7 +181,13 @@ export async function action({ request, context }: Route.ActionArgs) {
   if (answerId) {
     await db
       .update(answers)
-      .set({ text, photos: photoKeys, updatedAt: nowIso })
+      .set({
+        text,
+        photos: photoKeys,
+        voiceMemo: voiceKey,
+        voiceDuration,
+        updatedAt: nowIso,
+      })
       .where(and(eq(answers.id, answerId), eq(answers.createdBy, user.id)));
   } else {
     await db.insert(answers).values({
@@ -156,6 +199,8 @@ export async function action({ request, context }: Route.ActionArgs) {
       month,
       text,
       photos: photoKeys,
+      voiceMemo: voiceKey,
+      voiceDuration,
       reflected: false,
       createdBy: user.id,
       createdAt: nowIso,
@@ -177,6 +222,121 @@ export default function AnswerScreen({ loaderData }: Route.ComponentProps) {
   const [photoError, setPhotoError] = useState<StringKey | null>(null);
   const [discardOpen, setDiscardOpen] = useState(false);
 
+  // Voice memo
+  const [keptVoice, setKeptVoice] = useState<string | null>(loaderData.voiceMemo);
+  const [voiceBlob, setVoiceBlob] = useState<Blob | null>(null);
+  const [secs, setSecs] = useState(loaderData.voiceDuration);
+  const [recording, setRecording] = useState(false);
+  const [playing, setPlaying] = useState(false);
+  const [voiceError, setVoiceError] = useState<StringKey | null>(null);
+
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const secsRef = useRef(loaderData.voiceDuration);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  const hasVoice = voiceBlob !== null || keptVoice !== null;
+
+  const voiceUrl = useMemo(() => {
+    if (voiceBlob) return URL.createObjectURL(voiceBlob);
+    if (keptVoice) return `/api/files/${keptVoice}`;
+    return null;
+  }, [voiceBlob, keptVoice]);
+
+  useEffect(() => {
+    return () => {
+      if (voiceBlob && voiceUrl) URL.revokeObjectURL(voiceUrl);
+    };
+  }, [voiceUrl, voiceBlob]);
+
+  const stopRec = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    const mr = mediaRecorderRef.current;
+    if (mr && mr.state !== "inactive") mr.stop();
+    setRecording(false);
+  }, []);
+  const stopRecRef = useRef(stopRec);
+  stopRecRef.current = stopRec;
+
+  async function startRec() {
+    setVoiceError(null);
+    if (
+      typeof navigator === "undefined" ||
+      !navigator.mediaDevices?.getUserMedia ||
+      typeof MediaRecorder === "undefined"
+    ) {
+      setVoiceError("answer.voiceUnsupported");
+      return;
+    }
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      setVoiceError("answer.voicePermission");
+      return;
+    }
+    const mr = new MediaRecorder(stream);
+    chunksRef.current = [];
+    mr.ondataavailable = (e) => {
+      if (e.data.size > 0) chunksRef.current.push(e.data);
+    };
+    mr.onstop = () => {
+      const blob = new Blob(chunksRef.current, {
+        type: mr.mimeType || "audio/webm",
+      });
+      setVoiceBlob(blob);
+      stream.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    };
+    mediaRecorderRef.current = mr;
+    streamRef.current = stream;
+    // A fresh recording replaces anything already there.
+    setKeptVoice(null);
+    setVoiceBlob(null);
+    setPlaying(false);
+    secsRef.current = 0;
+    setSecs(0);
+    mr.start();
+    setRecording(true);
+    timerRef.current = setInterval(() => {
+      secsRef.current += 1;
+      setSecs(secsRef.current);
+      if (secsRef.current >= MAX_VOICE_SECONDS) stopRecRef.current();
+    }, 1000);
+  }
+
+  function deleteVoice() {
+    if (recording) stopRec();
+    if (audioRef.current) audioRef.current.pause();
+    setPlaying(false);
+    setVoiceBlob(null);
+    setKeptVoice(null);
+    secsRef.current = 0;
+    setSecs(0);
+  }
+
+  function togglePlay() {
+    const a = audioRef.current;
+    if (!a) return;
+    if (playing) a.pause();
+    else void a.play();
+  }
+
+  // Tear down the recorder if the screen unmounts mid-record.
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      const mr = mediaRecorderRef.current;
+      if (mr && mr.state !== "inactive") mr.stop();
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+    };
+  }, []);
+
   const saving = fetcher.state !== "idle";
   const saveFailed = fetcher.data?.ok === false;
 
@@ -186,14 +346,17 @@ export default function AnswerScreen({ loaderData }: Route.ComponentProps) {
   }, [previews]);
 
   const photoCount = keptPhotos.length + files.length;
-  const canSave = text.trim().length > 0 || photoCount > 0;
+  const canSave = text.trim().length > 0 || photoCount > 0 || hasVoice;
 
   const dirty =
     text !== loaderData.text ||
     files.length > 0 ||
-    keptPhotos.length !== loaderData.photos.length;
+    keptPhotos.length !== loaderData.photos.length ||
+    voiceBlob !== null ||
+    keptVoice !== loaderData.voiceMemo;
 
   function handleClose() {
+    if (recording) stopRec();
     if (dirty) {
       setDiscardOpen(true);
     } else {
@@ -227,6 +390,7 @@ export default function AnswerScreen({ loaderData }: Route.ComponentProps) {
 
   function handleSave() {
     if (!canSave || saving) return;
+    if (recording) stopRec();
     const fd = new FormData();
     fd.append("intent", "save");
     fd.append("cardId", loaderData.cardId);
@@ -238,6 +402,13 @@ export default function AnswerScreen({ loaderData }: Route.ComponentProps) {
     fd.append("month", loaderData.month);
     keptPhotos.forEach((key) => fd.append("keptPhotos", key));
     files.forEach((file) => fd.append("photos", file));
+    if (voiceBlob) {
+      fd.append("voice", voiceBlob, "voice-memo.webm");
+      fd.append("voiceDuration", String(secs));
+    } else if (keptVoice) {
+      fd.append("keptVoice", keptVoice);
+      fd.append("voiceDuration", String(secs));
+    }
     fetcher.submit(fd, { method: "post", encType: "multipart/form-data" });
   }
 
@@ -254,6 +425,13 @@ export default function AnswerScreen({ loaderData }: Route.ComponentProps) {
     ...files.map((_, index) => ({ kind: "file" as const, src: previews[index], index })),
   ];
   const showAddSlot = photoCount < MAX_PHOTOS;
+
+  const voiceActive = recording || hasVoice;
+  const voiceFilled = recording
+    ? (secs % WAVE_HEIGHTS.length) + 1
+    : hasVoice
+      ? WAVE_HEIGHTS.length
+      : 0;
 
   return (
     <PhoneShell>
@@ -314,6 +492,101 @@ export default function AnswerScreen({ loaderData }: Route.ComponentProps) {
             />
           )}
         </div>
+      </div>
+
+      {/* Voice memo */}
+      <div className="mt-8">
+        {voiceUrl && (
+          <audio
+            ref={audioRef}
+            src={voiceUrl}
+            className="hidden"
+            onPlay={() => setPlaying(true)}
+            onPause={() => setPlaying(false)}
+            onEnded={() => setPlaying(false)}
+          />
+        )}
+        <Text
+          id="answer.voiceLabel"
+          as="p"
+          className="font-mono text-[10.5px] uppercase tracking-[.16em] text-[var(--df-text-label)]"
+        />
+        <div
+          className="mt-3 flex items-center gap-3.5 rounded-full py-3 pl-3 pr-3.5"
+          style={{
+            border: `1px solid ${recording ? "var(--df-lilac)" : "rgba(254,252,242,.16)"}`,
+            background: "rgba(254,252,242,.04)",
+          }}
+        >
+          <button
+            type="button"
+            onClick={recording ? stopRec : hasVoice ? togglePlay : startRec}
+            className="flex h-[46px] w-[46px] flex-none items-center justify-center rounded-full transition-transform duration-150 ease-standard active:translate-y-px"
+            style={{
+              background: recording ? "#8A365A" : "var(--df-cream)",
+              color: recording ? "var(--df-cream)" : "var(--df-burgundy)",
+            }}
+          >
+            {recording ? (
+              <LuSquare size={18} fill="currentColor" />
+            ) : hasVoice && playing ? (
+              <LuPause size={20} fill="currentColor" />
+            ) : hasVoice ? (
+              <LuPlay size={20} fill="currentColor" />
+            ) : (
+              <LuMic size={20} />
+            )}
+            <Text
+              id={
+                recording
+                  ? "answer.voiceStop"
+                  : hasVoice && playing
+                    ? "answer.voicePause"
+                    : hasVoice
+                      ? "answer.voicePlay"
+                      : "answer.voiceRecord"
+              }
+              as="span"
+              className="sr-only"
+            />
+          </button>
+
+          <div className="flex h-8 flex-1 items-center gap-[3px] overflow-hidden" aria-hidden="true">
+            {WAVE_HEIGHTS.map((h, i) => (
+              <span
+                key={i}
+                className="w-[3px] flex-none rounded-[2px]"
+                style={{
+                  height: voiceActive ? h : 4,
+                  background: i < voiceFilled ? "var(--df-lilac)" : "rgba(254,252,242,.24)",
+                }}
+              />
+            ))}
+          </div>
+
+          <span className="flex-none font-mono text-[12px] leading-none text-[rgba(254,252,242,.8)] [font-variant-numeric:tabular-nums]">
+            {mmss(secs)} / 5:00
+          </span>
+
+          {hasVoice && !recording && (
+            <button
+              type="button"
+              onClick={deleteVoice}
+              className="flex flex-none items-center justify-center p-1 text-[rgba(254,252,242,.7)] transition-colors duration-150 ease-standard hover:text-foreground"
+            >
+              <LuTrash2 size={18} />
+              <Text id="answer.voiceDelete" as="span" className="sr-only" />
+            </button>
+          )}
+        </div>
+        {voiceError && (
+          <Text
+            id={voiceError}
+            as="p"
+            role="alert"
+            className="mt-2 text-[13px] leading-[1.45] text-[color:var(--df-error-on-dark,#F2B8C6)]"
+          />
+        )}
       </div>
 
       {/* Photos */}

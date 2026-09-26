@@ -13,6 +13,8 @@ export const answers = sqliteTable("answers", {
   questionText: text("question_text").notNull(),
   reflected: integer("reflected", { mode: "boolean" }),
   text: text("text"),
+  voiceDuration: real("voice_duration"),
+  voiceMemo: text("voice_memo"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 });
