@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
-import { eq, asc, inArray } from "drizzle-orm";
+import { asc, inArray } from "drizzle-orm";
 import { LuLibrary, LuFilter } from "react-icons/lu";
 import { Text } from "~stencil/ui/strings";
 import { createDb } from "~stencil/db";
@@ -16,13 +16,14 @@ import {
 import type { Route } from "./+types/app.library";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
-  const { user } = await requireAuth(request, context.cloudflare.env);
+  // Gate the route to signed-in users; the deck library itself is shared.
+  await requireAuth(request, context.cloudflare.env);
   const db = createDb(context.cloudflare.env);
 
+  // Decks are the shared question library — read globally, not per-user.
   const deckRows = await db
     .select()
     .from(decks)
-    .where(eq(decks.createdBy, user.id))
     .orderBy(asc(decks.sortOrder));
 
   // cardCount is not a column — derive it by counting cards per deck.

@@ -65,7 +65,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     ? await db
         .select({ id: decks.id, name: decks.name })
         .from(decks)
-        .where(and(eq(decks.id, deckId), eq(decks.createdBy, user.id)))
+        .where(eq(decks.id, deckId))
         .limit(1)
     : [];
 
@@ -74,7 +74,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     ? await db
         .select({ id: cards.id, category: cards.category, question: cards.question })
         .from(cards)
-        .where(and(eq(cards.deckId, deckId), eq(cards.createdBy, user.id)))
+        .where(eq(cards.deckId, deckId))
     : [];
 
   const categoryCounts = new Map<string, number>();
@@ -153,7 +153,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   const [card] = await db
     .select({ id: cards.id, question: cards.question, category: cards.category, deckId: cards.deckId })
     .from(cards)
-    .where(and(eq(cards.id, cardId), eq(cards.createdBy, user.id)))
+    .where(eq(cards.id, cardId))
     .limit(1);
   if (!card) return { ok: false as const, error: "That card no longer exists." };
 

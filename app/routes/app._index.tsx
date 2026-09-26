@@ -74,8 +74,10 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const db = createDb(context.cloudflare.env);
 
   const [deckRows, cardRows, answerRows, settingRows] = await Promise.all([
-    db.select().from(decks).where(eq(decks.createdBy, user.id)),
-    db.select().from(cards).where(eq(cards.createdBy, user.id)),
+    // Decks and cards are the shared question library — the same for everyone,
+    // so they're read globally rather than scoped to created_by.
+    db.select().from(decks),
+    db.select().from(cards),
     db.select().from(answers).where(eq(answers.createdBy, user.id)),
     db.select().from(settings).where(eq(settings.createdBy, user.id)),
   ]);

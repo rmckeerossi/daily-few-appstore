@@ -87,7 +87,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const [card] = await db
       .select()
       .from(cards)
-      .where(and(eq(cards.id, cardId), eq(cards.createdBy, user.id)))
+      .where(eq(cards.id, cardId))
       .limit(1);
     if (!card) throw redirect("/app");
     const [deck] = await db

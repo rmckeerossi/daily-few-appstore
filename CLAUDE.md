@@ -20,7 +20,11 @@ It is built to match a supplied Claude Design export exactly (dark "night" theme
   questionText/deckName/categoryName snapshot + month "YYYY-MM" + reflected flag +
   photos + voiceMemo R2 key + voiceDuration seconds), monthly-notes, settings (season +
   reminder toggles + onboarding fields: fullName, birthday "YYYY-MM-DD", phone,
-  consentedAt, onboardedAt). Everything scoped by created_by. Icons are react-icons Lucide (`lu`) only.
+  consentedAt, onboardedAt). decks + cards are the SHARED question library — one author
+  (the app owner) seeds them and every signed-in user reads them globally (no created_by
+  filter on deck/card reads), just like the card of the day. answers, monthly-notes and
+  settings are per-user, scoped by created_by (always filter answer reads by user.id).
+  Icons are react-icons Lucide (`lu`) only.
 - Onboarding: platform auth (email/Google, hosted) handles the actual sign-up; NEVER
   instantiate betterAuth. The design's custom sign-up form is a one-time onboarding screen
   layered on top at /welcome (routes/welcome.tsx) — collects name, birthday, phone, season

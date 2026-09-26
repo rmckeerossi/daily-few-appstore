@@ -1,7 +1,7 @@
 import type { Route } from "./+types/app.decks.$id";
 import { Link } from "react-router";
 import { LuArrowLeft, LuChevronRight, LuLayers } from "react-icons/lu";
-import { eq, inArray } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { createDb } from "~stencil/db";
 import { requireAuth } from "~stencil/auth/server";
 import { Text } from "~stencil/ui/strings";
@@ -31,7 +31,8 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
     .where(eq(decks.id, params.id))
     .limit(1);
 
-  if (!deck || deck.createdBy !== user.id) {
+  // Decks are shared content — any signed-in user can open one.
+  if (!deck) {
     return { deck: null, categories: [] as CategoryRow[] };
   }
 
@@ -46,7 +47,7 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
     const rows = await db
       .select({ cardId: answers.cardId })
       .from(answers)
-      .where(inArray(answers.cardId, cardIds));
+      .where(and(eq(answers.createdBy, user.id), inArray(answers.cardId, cardIds)));
     for (const r of rows) {
       if (r.cardId) answeredCardIds.add(r.cardId);
     }
