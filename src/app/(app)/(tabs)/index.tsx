@@ -2,10 +2,12 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Check, Send } from 'lucide-react-native';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { PrimaryButton, RoundIconButton, TextButton } from '@/components/buttons';
+import { AnswerSheet } from '@/components/answer-sheet';
 import { DeckRow } from '@/components/decks';
+import { LookingBackCard } from '@/components/looking-back';
 import { MonthRing } from '@/components/month-ring';
 import { QuestionCard } from '@/components/question-card';
 import { Screen } from '@/components/screen';
@@ -18,12 +20,13 @@ import {
   daysWithSomethingSaved,
   getCardOfTheDay,
   getDecks,
+  getLookingBack,
   getSeasons,
   logActivity,
   markReflected,
   seasonDeck,
 } from '@/lib/data';
-import { dayLabel, greetingFor } from '@/lib/dates';
+import { dayLabel, greetingFor, localMonthStart } from '@/lib/dates';
 import { useSession } from '@/lib/session';
 import { shareCard } from '@/lib/share';
 import { useLoad } from '@/lib/use-load';
@@ -32,14 +35,17 @@ import { colors, radius, type } from '@/theme/tokens';
 const submark = require('@/assets/images/brand/submark-white.png');
 
 async function loadHome(seasonId: string | null) {
-  const [decks, card, seasons, reflectedDays] = await Promise.all([
+  const [decks, card, seasons, reflectedDays, lookingBack] = await Promise.all([
     getDecks(),
     getCardOfTheDay(),
     getSeasons(),
     daysWithSomethingSaved(),
+    // A nice-to-have: never let it stop Home from loading.
+    getLookingBack().catch(() => null),
   ]);
   return {
     card,
+    lookingBack,
     reflectedDays,
     todayStatus: card ? await answeredToday(card.id) : null,
     monthly: currentMonthlyDeck(decks),
@@ -53,6 +59,7 @@ export default function Home() {
   const toast = useToast();
   const { data, error, reload, setData } = useLoad(() => loadHome(profile?.season_id ?? null), profile?.season_id ?? '');
   const [reflecting, setReflecting] = useState(false);
+  const [openAnswer, setOpenAnswer] = useState<string | null>(null);
   const now = new Date();
 
   const card = data?.card ?? null;
@@ -102,7 +109,12 @@ export default function Home() {
         <>
           <View style={{ gap: 14 }}>
             <Eyebrow>The month so far</Eyebrow>
-            <MonthRing today={now} reflectedDays={data.reflectedDays} />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityHint="Opens this month's recap so far"
+              onPress={() => router.push({ pathname: '/recap', params: { month: localMonthStart(now).slice(0, 7) } })}>
+              <MonthRing today={now} reflectedDays={data.reflectedDays} />
+            </Pressable>
           </View>
 
           {card ? (
@@ -132,6 +144,8 @@ export default function Home() {
             </View>
           ) : null}
 
+          {data.lookingBack ? <LookingBackCard item={data.lookingBack} onOpenAnswer={setOpenAnswer} /> : null}
+
           {data.monthly ? (
             <View style={{ gap: 14 }}>
               <Eyebrow>This month’s deck</Eyebrow>
@@ -147,6 +161,7 @@ export default function Home() {
           ) : null}
         </>
       )}
+      <AnswerSheet answerId={openAnswer} onClose={() => setOpenAnswer(null)} onDeleted={reload} />
     </Screen>
   );
 }

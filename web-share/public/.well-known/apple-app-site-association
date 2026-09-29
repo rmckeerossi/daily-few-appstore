@@ -1,0 +1,10 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["APPLE_TEAM_ID.com.onyxroots.dailyfew"],
+        "components": [{ "/": "/c/*", "comment": "Shared cards open in the app" }]
+      }
+    ]
+  }
+}

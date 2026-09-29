@@ -1,18 +1,16 @@
 import { router } from 'expo-router';
 import { ArrowRight, BookOpen, Check, ChevronRight, Image as ImageIcon, Mic, PenLine, type LucideIcon } from 'lucide-react-native';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AnswerSheet } from '@/components/answer-sheet';
 import { PrimaryButton } from '@/components/buttons';
 import { CardGradient } from '@/components/gradients';
 import { Screen } from '@/components/screen';
 import { Segmented } from '@/components/segmented';
-import { Sheet, SheetButton } from '@/components/sheet';
 import { LoadError, Loading } from '@/components/status';
 import { BodyLight, Eyebrow, ScreenTitle } from '@/components/text';
-import { useToast } from '@/components/toast';
-import { getAnswers, getEntries, getNotes, saveNote, type AnswerRow, type Entry, type MonthlyNote } from '@/lib/data';
+import { getAnswers, getEntries, getNotes, type AnswerRow, type Entry, type MonthlyNote } from '@/lib/data';
 import { localMonthStart, monthName, parseLocalDate, shortDate } from '@/lib/dates';
 import { useLoad } from '@/lib/use-load';
 import { colors, fonts, radius, type } from '@/theme/tokens';
@@ -75,7 +73,6 @@ export default function History() {
   const { data, error, reload } = useLoad(loadHistory);
   const [view, setView] = useState<'month' | 'card'>('month');
   const [openAnswer, setOpenAnswer] = useState<string | null>(null);
-  const [noteFor, setNoteFor] = useState<MonthGroup | null>(null);
 
   const empty = data && data.feed.length === 0;
 
@@ -118,7 +115,7 @@ export default function History() {
                     <Text style={[type.labelSm, { color: colors.lilac }]}>{g.items.length} saved</Text>
                   </View>
                   {/* The closing reflection belongs to months that have ended. */}
-                  {g.monthStart < localMonthStart() ? <ClosingReflection group={g} onOpen={() => setNoteFor(g)} /> : null}
+                  {g.monthStart < localMonthStart() ? <RecapCard group={g} /> : null}
                   {g.items.map((item) => (
                     <FeedLine
                       key={`${item.kind}-${item.row.id}`}
@@ -151,7 +148,6 @@ export default function History() {
       )}
 
       <AnswerSheet answerId={openAnswer} onClose={() => setOpenAnswer(null)} onDeleted={reload} />
-      <NoteSheet group={noteFor} onClose={() => setNoteFor(null)} onSaved={reload} />
     </Screen>
   );
 }
@@ -195,71 +191,28 @@ function FeedLine({ item, onPress }: { item: FeedItem; onPress: () => void }) {
   );
 }
 
-function ClosingReflection({ group, onOpen }: { group: MonthGroup; onOpen: () => void }) {
+/** Past months: the recap card, which opens that month's recap and closing reflection. */
+function RecapCard({ group }: { group: MonthGroup }) {
   const body = group.note?.body?.trim();
   return (
-    <Pressable accessibilityRole="button" onPress={onOpen} style={styles.reflection}>
+    <Pressable
+      accessibilityRole="button"
+      onPress={() => router.push({ pathname: '/recap', params: { month: group.key } })}
+      style={styles.reflection}>
       <CardGradient />
-      <Text style={[type.labelSm, { color: 'rgba(254,252,242,0.85)' }]}>{group.label} · closing reflection</Text>
-      <Text style={{ fontFamily: fonts.display, fontSize: 22, lineHeight: 27, color: colors.paleCream }} numberOfLines={body ? 4 : 2}>
-        {body ?? `As ${group.label} closes, what are you carrying out of it?`}
-      </Text>
-      {!body ? (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Text style={[type.button, { color: colors.paleCream }]}>Write your closing reflection</Text>
-          <ArrowRight size={16} color={colors.paleCream} strokeWidth={1.5} />
-        </View>
+      <Text style={[type.labelSm, { color: 'rgba(254,252,242,0.85)' }]}>Monthly recap</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <Text style={{ flex: 1, fontFamily: fonts.display, fontSize: 24, lineHeight: 28, color: colors.paleCream }}>
+          Your {group.label}, looked back on
+        </Text>
+        <ArrowRight size={20} color={colors.paleCream} strokeWidth={1.5} />
+      </View>
+      {body ? (
+        <Text style={[type.bodySm, { color: 'rgba(254,252,242,0.85)' }]} numberOfLines={2}>
+          {body}
+        </Text>
       ) : null}
     </Pressable>
-  );
-}
-
-function NoteSheet({ group, onClose, onSaved }: { group: MonthGroup | null; onClose: () => void; onSaved: () => void }) {
-  const toast = useToast();
-  const [draft, setDraft] = useState<{ key: string; text: string } | null>(null);
-  const [saving, setSaving] = useState(false);
-
-  // Start each month's sheet from what's saved.
-  const text = draft && group && draft.key === group.key ? draft.text : (group?.note?.body ?? '');
-
-  const save = async () => {
-    if (!group) return;
-    setSaving(true);
-    try {
-      await saveNote(group.monthStart, text);
-      toast('Reflection saved.');
-      setDraft(null);
-      onSaved();
-      onClose();
-    } catch {
-      toast('That didn’t save. Try again.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <Sheet
-      open={!!group}
-      onClose={onClose}
-      title="Your closing reflection"
-      description={
-        group
-          ? `Look back on the whole of ${group.label}: what it held, what it asked of you, and what you’re leaving behind.`
-          : undefined
-      }>
-      <TextInput
-        value={text}
-        onChangeText={(t) => group && setDraft({ key: group.key, text: t })}
-        placeholder="Looking back on the whole month…"
-        placeholderTextColor={colors.cream500}
-        multiline
-        textAlignVertical="top"
-        accessibilityLabel="Your closing reflection"
-        style={styles.noteInput}
-      />
-      <SheetButton label={saving ? 'Saving…' : 'Save reflection'} onPress={save} />
-    </Sheet>
   );
 }
 
@@ -292,16 +245,5 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(209,219,255,0.24)',
-  },
-  noteInput: {
-    minHeight: 140,
-    borderWidth: 1,
-    borderColor: colors.cream300,
-    borderRadius: radius.input,
-    padding: 12,
-    fontFamily: fonts.sans,
-    fontSize: 16,
-    lineHeight: 24,
-    color: colors.burgundy,
   },
 });

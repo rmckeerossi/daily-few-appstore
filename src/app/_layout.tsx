@@ -6,13 +6,15 @@ import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useEffect } from 'react';
 
+import { LockGate } from '@/components/lock-screen';
 import { ToastProvider } from '@/components/toast';
+import { crashReportingEnabled, Sentry } from '@/lib/crash-reporting';
 import { SessionProvider, useSession } from '@/lib/session';
 import { colors } from '@/theme/tokens';
 
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
+function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     'IvarDisplayCondensed-Medium': require('@/assets/fonts/IvarDisplayCondensed-Medium.otf'),
     'IvarDisplay-MediumItalic': require('@/assets/fonts/IvarDisplay-MediumItalic.otf'),
@@ -36,6 +38,9 @@ export default function RootLayout() {
   );
 }
 
+// Catches crashes anywhere in the app once crash reporting is switched on.
+export default crashReportingEnabled ? Sentry.wrap(RootLayout) : RootLayout;
+
 function RootNavigator() {
   const { session, profile, isLoading, profileLoading } = useSession();
 
@@ -48,16 +53,20 @@ function RootNavigator() {
   const ready = !!session && !profileLoading;
 
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.night } }}>
-      <Stack.Protected guard={ready && !!profile}>
-        <Stack.Screen name="(app)" />
-      </Stack.Protected>
-      <Stack.Protected guard={ready && !profile}>
-        <Stack.Screen name="finish-setup" />
-      </Stack.Protected>
-      <Stack.Protected guard={!ready}>
-        <Stack.Screen name="(auth)" />
-      </Stack.Protected>
-    </Stack>
+    <LockGate signedIn={!!session}>
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.night } }}>
+        <Stack.Protected guard={ready && !!profile}>
+          <Stack.Screen name="(app)" />
+        </Stack.Protected>
+        <Stack.Protected guard={ready && !profile}>
+          <Stack.Screen name="finish-setup" />
+        </Stack.Protected>
+        <Stack.Protected guard={!ready}>
+          <Stack.Screen name="(auth)" />
+        </Stack.Protected>
+        {/* Shared card links, whether or not anyone is signed in. */}
+        <Stack.Screen name="c/[id]" />
+      </Stack>
+    </LockGate>
   );
 }

@@ -14,6 +14,7 @@ import { goBack } from '@/lib/nav';
 import { createEntry, deleteEntry, getEntry, updateEntry, type EntryKind } from '@/lib/data';
 import { monthName } from '@/lib/dates';
 import { pickPhotos, removeMedia, signedUrls, uploadPhoto, type PickedPhoto } from '@/lib/media';
+import { offerNotificationsOnce, syncReminders } from '@/lib/notifications';
 import { useSession } from '@/lib/session';
 import { colors, fonts, type } from '@/theme/tokens';
 
@@ -45,7 +46,7 @@ const COPY: Record<EntryKind, { eyebrow: string; title: string; newLabel: string
  */
 export default function EntryScreen() {
   const params = useLocalSearchParams<{ kind?: EntryKind; id?: string }>();
-  const { session } = useSession();
+  const { session, profile } = useSession();
   const toast = useToast();
 
   const [kind, setKind] = useState<EntryKind>(params.kind === 'moment' ? 'moment' : 'write');
@@ -129,6 +130,7 @@ export default function EntryScreen() {
       } else {
         await createEntry(kind, body, paths);
         toast(`Saved to ${monthName(new Date())}.`);
+        offerNotificationsOnce(() => syncReminders(profile).catch(() => {}));
       }
       goBack();
     } catch {

@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 
 import { deleteAnswer, getAnswer, type AnswerRow } from '@/lib/data';
 import { monthName, parseLocalDate } from '@/lib/dates';
@@ -97,7 +97,7 @@ export function AnswerSheet({ answerId, onClose, onDeleted }: {
       {!answer ? (
         <ActivityIndicator color={colors.burgundy} style={{ paddingVertical: 32 }} />
       ) : (
-        <ScrollView style={{ maxHeight: 520 }} contentContainerStyle={{ gap: 16 }}>
+        <View style={{ gap: 16 }}>
           <Text style={{ fontFamily: fonts.display, fontSize: 28, lineHeight: 31, color: colors.burgundy }}>
             {answer.question_text}
           </Text>
@@ -125,7 +125,7 @@ export function AnswerSheet({ answerId, onClose, onDeleted }: {
             <SheetButton label="Edit" onPress={edit} />
             <SheetButton label="Delete" variant="secondary" onPress={() => setConfirming(true)} />
           </View>
-        </ScrollView>
+        </View>
       )}
     </Sheet>
   );

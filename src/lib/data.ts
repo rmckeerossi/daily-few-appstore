@@ -2,7 +2,7 @@
 // limits every private table to the signed-in person; nothing here relies on the
 // app to enforce privacy.
 
-import { localDate, localMonthStart } from './dates';
+import { addDays, daysBetween, localDate, localMonthStart, parseLocalDate } from './dates';
 import { supabase } from './supabase';
 
 export type DeckType = 'library' | 'monthly' | 'life_season' | 'body';
@@ -278,6 +278,80 @@ export async function deleteAnswer(answer: Pick<AnswerRow, 'id' | 'voice_path' |
   if (media.length) await supabase.storage.from('answer-media').remove(media);
 }
 
+// "Looking back": a past answer from about a year, six months, three months or
+// a month ago (a few days either side), to revisit and maybe answer again.
+const LOOK_BACK = [
+  { days: 365, label: 'A year ago' },
+  { days: 182, label: 'Six months ago' },
+  { days: 91, label: 'Three months ago' },
+  { days: 30, label: 'A month ago' },
+];
+const LOOK_BACK_SLACK = 3;
+
+export type LookingBack = { answer: AnswerRow; label: string };
+
+export async function getLookingBack(): Promise<LookingBack | null> {
+  const today = localDate();
+  const now = new Date();
+  const oldest = localDate(addDays(now, -(LOOK_BACK[0].days + LOOK_BACK_SLACK)));
+  const newest = localDate(addDays(now, -(LOOK_BACK[LOOK_BACK.length - 1].days - LOOK_BACK_SLACK)));
+  const rows = must(
+    await supabase
+      .from('answers')
+      .select(ANSWER_SELECT)
+      .gte('answered_on', oldest)
+      .lte('answered_on', newest)
+      .order('answered_on', { ascending: false }),
+  ) as AnswerRow[];
+
+  // Only answers with something to look at, not "reflected" marks on their own.
+  const withContent = rows.filter((r) => r.body?.trim() || r.voice_path || r.photo_paths.length > 0);
+
+  for (const w of LOOK_BACK) {
+    const matches = withContent.filter((r) => Math.abs(daysBetween(r.answered_on, today) - w.days) <= LOOK_BACK_SLACK);
+    if (matches.length) {
+      // Same pick all day: choose by today's date rather than at random.
+      const pick = matches[Number(today.replace(/-/g, '')) % matches.length];
+      return { answer: pick, label: w.label };
+    }
+  }
+
+  // Development only (never in TestFlight or the App Store): with a new
+  // account nothing is a month old yet, so preview the card with the latest answer.
+  if (__DEV__) {
+    const latest = (must(await supabase.from('answers').select(ANSWER_SELECT).order('created_at', { ascending: false }).limit(10)) as AnswerRow[])
+      .find((r) => r.body?.trim() || r.voice_path || r.photo_paths.length > 0);
+    if (latest) return { answer: latest, label: 'Preview' };
+  }
+  return null;
+}
+
+/**
+ * Answers whose one-year anniversary falls in the next `days` days (from
+ * tomorrow), one per day, for "A year ago today you answered…" notifications.
+ */
+export async function getUpcomingAnniversaries(days: number): Promise<{ date: string; cardId: string; question: string }[]> {
+  const now = new Date();
+  const from = localDate(addDays(now, 1 - 365));
+  const to = localDate(addDays(now, days - 365));
+  const rows = must(
+    await supabase
+      .from('answers')
+      .select('card_id, question_text, answered_on, body, voice_path, photo_paths')
+      .gte('answered_on', from)
+      .lte('answered_on', to)
+      .order('answered_on'),
+  ) as Pick<AnswerRow, 'card_id' | 'question_text' | 'answered_on' | 'body' | 'voice_path' | 'photo_paths'>[];
+
+  const byDay = new Map<string, { date: string; cardId: string; question: string }>();
+  for (const r of rows) {
+    if (!(r.body?.trim() || r.voice_path || r.photo_paths.length > 0)) continue;
+    const anniversary = localDate(addDays(parseLocalDate(r.answered_on), 365));
+    if (!byDay.has(anniversary)) byDay.set(anniversary, { date: anniversary, cardId: r.card_id, question: r.question_text });
+  }
+  return [...byDay.values()];
+}
+
 /** Days of the current month (1–31) with an answer, entry or reflection saved. */
 export async function daysWithSomethingSaved(): Promise<Set<number>> {
   const since = localMonthStart();
@@ -394,6 +468,28 @@ export type MonthlyNote = { id: string; month: string; body: string | null };
 
 export async function getNotes(): Promise<MonthlyNote[]> {
   return must(await supabase.from('monthly_notes').select('id, month, body'));
+}
+
+/** Everything saved in one month ("YYYY-MM"), for its recap. */
+export async function getMonth(month: string) {
+  const start = `${month}-01`;
+  const [y, m] = month.split('-').map(Number);
+  const next = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`;
+  const [answers, entries, note] = await Promise.all([
+    supabase
+      .from('answers')
+      .select(ANSWER_SELECT)
+      .gte('answered_on', start)
+      .lt('answered_on', next)
+      .order('created_at', { ascending: false }),
+    supabase.from('entries').select(ENTRY_SELECT).gte('entry_on', start).lt('entry_on', next).order('created_at', { ascending: false }),
+    supabase.from('monthly_notes').select('id, month, body').eq('month', start).maybeSingle(),
+  ]);
+  return {
+    answers: must(answers) as AnswerRow[],
+    entries: (entries.data ?? []) as Entry[],
+    note: (note.data ?? null) as MonthlyNote | null,
+  };
 }
 
 /** `month` is the first day of the month, "YYYY-MM-01". */

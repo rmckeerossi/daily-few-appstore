@@ -25,6 +25,16 @@ export function parseLocalDate(s: string): Date {
   return new Date(y, m - 1, d);
 }
 
+/** The local calendar date `days` days from `d` (negative for the past). */
+export function addDays(d: Date, days: number): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() + days);
+}
+
+/** Whole calendar days from `from` to `to` ("YYYY-MM-DD" strings). */
+export function daysBetween(from: string, to: string): number {
+  return Math.round((parseLocalDate(to).getTime() - parseLocalDate(from).getTime()) / 86_400_000);
+}
+
 export function monthName(d: Date): string {
   return MONTHS[d.getMonth()];
 }

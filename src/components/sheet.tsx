@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, fonts, radius, type } from '@/theme/tokens';
@@ -18,17 +18,24 @@ export function Sheet({ open, onClose, title, description, children }: {
   const insets = useSafeAreaInsets();
   return (
     <Modal visible={open} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.fill}>
+      {/* Rides up above the keyboard, so fields and the Save button stay reachable. */}
+      <KeyboardAvoidingView style={styles.fill} behavior="padding">
         <Pressable style={styles.veil} onPress={onClose} accessibilityLabel="Close" />
         <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16) + 24 }]}>
           <View style={styles.grabber} />
-          <Text style={[type.sheetTitle, { color: colors.burgundy }]} accessibilityRole="header">
-            {title}
-          </Text>
-          {description ? <Text style={[type.body, { color: colors.burgundy600 }]}>{description}</Text> : null}
-          {children}
+          <ScrollView
+            bounces={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{ gap: 18 }}
+            showsVerticalScrollIndicator={false}>
+            <Text style={[type.sheetTitle, { color: colors.burgundy }]} accessibilityRole="header">
+              {title}
+            </Text>
+            {description ? <Text style={[type.body, { color: colors.burgundy600 }]}>{description}</Text> : null}
+            {children}
+          </ScrollView>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -87,6 +94,7 @@ const styles = StyleSheet.create({
     paddingTop: 14,
     paddingHorizontal: 24,
     gap: 18,
+    maxHeight: '92%',
   },
   grabber: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: colors.cream300 },
   option: {

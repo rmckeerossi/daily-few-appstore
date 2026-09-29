@@ -2,9 +2,11 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Text } from 'react-native';
 
+import { AppleButton } from '@/components/apple-button';
 import { PrimaryButton, TextButton } from '@/components/buttons';
 import { Field } from '@/components/form';
 import { StepScreen } from '@/components/step';
+import { signInWithApple } from '@/lib/apple';
 import { supabase } from '@/lib/supabase';
 import { colors, type } from '@/theme/tokens';
 
@@ -38,8 +40,20 @@ export default function SignIn() {
     router.push({ pathname: '/verify', params: { email: clean, mode: 'signin' } });
   };
 
+  // A brand-new Apple account has no profile yet; the app then asks for their
+  // details (finish-setup), with the same 18+ check as email signup.
+  const apple = async () => {
+    setError(null);
+    try {
+      await signInWithApple();
+    } catch {
+      setError('Sign in with Apple didn’t work. Try again, or use your email.');
+    }
+  };
+
   return (
     <StepScreen title="Welcome back." subtitle="We’ll email you a code to sign in. No password needed.">
+      <AppleButton onPress={apple} />
       <Field
         label="Email"
         value={email}

@@ -3,11 +3,15 @@ import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 import { Text, View, type TextInput } from 'react-native';
 
+import { AppleButton } from '@/components/apple-button';
 import { PrimaryButton } from '@/components/buttons';
 import { Checkbox, Field, FieldButton } from '@/components/form';
 import { StepScreen } from '@/components/step';
 import { Caption } from '@/components/text';
+import { rememberSignupForApple, signInWithApple, takePendingSignup } from '@/lib/apple';
 import { ageOn, localDate, timeZone } from '@/lib/dates';
+import { pendingSharedCard } from '@/lib/links';
+import { useSession } from '@/lib/session';
 import { useSignup } from '@/lib/signup';
 import { supabase } from '@/lib/supabase';
 import { colors, type } from '@/theme/tokens';
@@ -25,6 +29,7 @@ type Errors = Partial<Record<'email' | 'birthday' | 'phone' | 'form', string>>;
 /** Signup step 3 of 3: email, birthday, optional phone, marketing consent. */
 export default function DetailsStep() {
   const { draft, update, reset } = useSignup();
+  const { setJustSignedUp } = useSession();
   const [email, setEmail] = useState(draft.email);
   const [birthday, setBirthday] = useState<Date | null>(draft.birthday);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -36,6 +41,33 @@ export default function DetailsStep() {
   const phoneRef = useRef<TextInput>(null);
 
   const hasPhone = digits(phone).length > 0;
+
+  // The Apple route needs everything except the email (Apple provides it).
+  const apple = async () => {
+    const next: Errors = {};
+    if (!birthday) next.birthday = 'Add your birthday.';
+    if (hasPhone && digits(phone).length !== 10) next.phone = 'Add a 10-digit phone number.';
+    setErrors(next);
+    if (Object.keys(next).length > 0 || !birthday) return;
+    if (ageOn(birthday) < MIN_AGE) {
+      reset();
+      router.replace('/too-young');
+      return;
+    }
+    rememberSignupForApple({ ...draft, birthday, phone, emailConsent, textConsent: hasPhone && textConsent });
+    setJustSignedUp(true);
+    try {
+      const signedIn = await signInWithApple();
+      if (!signedIn) {
+        takePendingSignup();
+        setJustSignedUp(false);
+      }
+    } catch {
+      takePendingSignup();
+      setJustSignedUp(false);
+      setErrors({ form: 'Sign in with Apple didn’t work. Try again, or use your email.' });
+    }
+  };
 
   const submit = async () => {
     const next: Errors = {};
@@ -70,6 +102,7 @@ export default function DetailsStep() {
           email_consent: emailConsent,
           text_consent: hasPhone && textConsent,
           timezone: timeZone(),
+          shared_card_id: pendingSharedCard(),
         },
       },
     });
@@ -156,7 +189,7 @@ export default function DetailsStep() {
 
       <View style={{ gap: 14 }}>
         <Checkbox checked={emailConsent} onChange={setEmailConsent}>
-          Email me about new decks and updates
+          Send me the Daily Few newsletter, with new decks, reflections, and the few things we love.
         </Checkbox>
         <Checkbox checked={textConsent} onChange={setTextConsent} disabled={!hasPhone}>
           Text me about new decks and updates
@@ -166,6 +199,7 @@ export default function DetailsStep() {
       <View style={{ gap: 14 }}>
         {errors.form ? <Text style={[type.caption, { color: colors.errorOnDark }]}>{errors.form}</Text> : null}
         <PrimaryButton label="Show me my first card" onPress={submit} loading={sending} />
+        <AppleButton orPosition="above" onPress={apple} />
         <Caption style={{ textAlign: 'center' }}>
           You must be 18 or older. Your answers are only ever visible to you.
         </Caption>

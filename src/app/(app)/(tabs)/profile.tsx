@@ -1,6 +1,7 @@
-import { LogOut, Pencil, Trash2 } from 'lucide-react-native';
+import * as WebBrowser from 'expo-web-browser';
+import { LogOut, Pencil, Shield, Trash2 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Linking, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Chip } from '@/components/form';
 import { BrandGradient } from '@/components/gradients';
@@ -18,7 +19,10 @@ import {
   type ProfilePatch,
   type Season,
 } from '@/lib/data';
+import { lockEnabled, lockMethod, setLockEnabled, unlock, type LockMethod } from '@/lib/app-lock';
 import { timeZone } from '@/lib/dates';
+import { anniversariesEnabled, askForNotifications, setAnniversariesEnabled, syncReminders } from '@/lib/notifications';
+import { SHARE_HOST } from '@/lib/links';
 import { useSession } from '@/lib/session';
 import { colors, fonts, radius, type } from '@/theme/tokens';
 
@@ -29,6 +33,7 @@ const TIMES = [
   { value: '21:30', label: '9:30 PM' },
 ];
 const DEFAULT_TIME = '20:00';
+const PRIVACY_URL = `https://${SHARE_HOST}/privacy`;
 
 const digits = (s: string) => s.replace(/\D/g, '');
 
@@ -47,8 +52,14 @@ export default function Profile() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  const [locked, setLocked] = useState(lockEnabled);
+  const [anniversaries, setAnniversaries] = useState(anniversariesEnabled);
+  const [method, setMethod] = useState<LockMethod>(null);
+  const lockLabel = method === 'Face ID' || method === 'Touch ID' ? `Lock with ${method}` : 'Lock with passcode';
+
   useEffect(() => {
     getSeasons().then(setSeasons, () => {});
+    lockMethod().then(setMethod, () => setMethod(null));
   }, []);
 
   if (!profile || !session) return null;
@@ -122,14 +133,25 @@ export default function Profile() {
           label="Daily reminder"
           description="A push at your chosen time that opens today’s card."
           value={p.reminder_enabled}
-          onChange={(on) =>
+          onChange={async (on) => {
+            if (on && !(await askForNotifications())) {
+              Alert.alert(
+                'Notifications are off',
+                'To get a daily reminder, allow notifications for Daily Few in Settings.',
+                [
+                  { text: 'Not now', style: 'cancel' },
+                  { text: 'Open Settings', onPress: () => Linking.openSettings() },
+                ],
+              );
+              return;
+            }
             save(
               on
                 ? { reminder_enabled: true, reminder_time: p.reminder_time?.slice(0, 5) ?? DEFAULT_TIME, timezone: timeZone() }
                 : { reminder_enabled: false },
               on ? 'Daily reminder on.' : 'Daily reminder off.',
-            )
-          }>
+            );
+          }}>
           {p.reminder_enabled ? (
             <View style={styles.chips}>
               {TIMES.map((t) => (
@@ -144,8 +166,25 @@ export default function Profile() {
           ) : null}
         </ToggleRow>
         <ToggleRow
-          label="Email updates"
-          description="New decks and product news."
+          label="A year ago today"
+          description="On the anniversary of an answer, a nudge to see if it’s changed."
+          value={anniversaries}
+          onChange={async (on) => {
+            if (on && !(await askForNotifications())) {
+              Alert.alert('Notifications are off', 'To get these, allow notifications for Daily Few in Settings.', [
+                { text: 'Not now', style: 'cancel' },
+                { text: 'Open Settings', onPress: () => Linking.openSettings() },
+              ]);
+              return;
+            }
+            setAnniversariesEnabled(on);
+            setAnniversaries(on);
+            syncReminders(profile).catch(() => {});
+          }}
+        />
+        <ToggleRow
+          label="Daily Few newsletter"
+          description="New decks, reflections, and the few things we love, by email."
           value={p.email_consent}
           onChange={(on) => save({ email_consent: on })}
         />
@@ -164,10 +203,36 @@ export default function Profile() {
       </View>
 
       <View>
+        <Eyebrow>Privacy</Eyebrow>
+        <ToggleRow
+          label={lockLabel}
+          description={
+            method ? 'Ask for it whenever you open Daily Few on this iPhone.' : 'Set up Face ID or a passcode in Settings to use this.'
+          }
+          value={locked}
+          disabled={!method}
+          onChange={async (on) => {
+            // Confirm it's really them, both to turn it on and to turn it off.
+            if (!(await unlock(on ? 'Turn on the app lock' : 'Turn off the app lock'))) return;
+            setLockEnabled(on);
+            setLocked(on);
+            toast(on ? 'App lock on.' : 'App lock off.');
+          }}
+        />
+      </View>
+
+      <View>
         <Eyebrow>Account</Eyebrow>
         <Pressable accessibilityRole="button" onPress={signOut} style={styles.accountRow}>
           <Text style={[type.body, { color: colors.textPrimary, fontSize: 17 }]}>Sign out</Text>
           <LogOut size={20} color={colors.textPrimary} strokeWidth={1.5} />
+        </Pressable>
+        <Pressable
+          accessibilityRole="link"
+          onPress={() => WebBrowser.openBrowserAsync(PRIVACY_URL)}
+          style={styles.accountRow}>
+          <Text style={[type.body, { color: colors.textPrimary, fontSize: 17 }]}>Privacy policy</Text>
+          <Shield size={20} color={colors.textPrimary} strokeWidth={1.5} />
         </Pressable>
         <Pressable accessibilityRole="button" onPress={() => setDeleteOpen(true)} style={[styles.accountRow, { borderBottomWidth: 0 }]}>
           <Text style={[type.body, { color: colors.errorOnDark, fontSize: 17 }]}>Delete account</Text>

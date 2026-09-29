@@ -13,7 +13,11 @@
       "supportsTablet": false,
       "config": {
         "usesNonExemptEncryption": false
-      }
+      },
+      "usesAppleSignIn": true,
+      "associatedDomains": [
+        "applinks:app.dailyfew.com"
+      ]
     },
     "android": {
       "package": "com.onyxroots.dailyfew",
@@ -52,7 +56,20 @@
           "enableBackgroundRecording": false,
           "enableBackgroundPlayback": false
         }
-      ]
+      ],
+      "expo-apple-authentication",
+      [
+        "expo-notifications",
+        {}
+      ],
+      "expo-asset",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Daily Few uses Face ID to keep your reflections locked, so only you can open them."
+        }
+      ],
+      "@sentry/react-native"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -62,6 +79,7 @@
       "eas": {
         "projectId": "d6d072c0-9aa0-4c25-8d5f-760b64f7b187"
       }
-    }
+    },
+    "owner": "rmckeerossi"
   }
 }

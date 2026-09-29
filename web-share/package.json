@@ -1,0 +1,6 @@
+{
+  "name": "daily-few-share",
+  "private": true,
+  "type": "module",
+  "description": "The page a shared Daily Few card link opens when the app isn't installed."
+}

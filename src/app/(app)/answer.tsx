@@ -17,6 +17,7 @@ import { noteAnswerSaved } from '@/lib/answer-events';
 import { getAnswer, getCard, logActivity, saveAnswer, updateAnswer } from '@/lib/data';
 import { monthName } from '@/lib/dates';
 import { pickPhotos, removeMedia, signedUrls, uploadPhoto, uploadVoice, type PickedPhoto } from '@/lib/media';
+import { offerNotificationsOnce, syncReminders } from '@/lib/notifications';
 import { useSession } from '@/lib/session';
 import { colors, fonts } from '@/theme/tokens';
 
@@ -33,7 +34,7 @@ type Question = { cardId: string; deckId: string | null; question: string; label
 export default function AnswerScreen() {
   const params = useLocalSearchParams<{ card?: string; answer?: string; cardOfDay?: string }>();
   const editing = !!params.answer;
-  const { session } = useSession();
+  const { session, profile } = useSession();
   const toast = useToast();
 
   const [question, setQuestion] = useState<Question | null>(null);
@@ -110,6 +111,7 @@ export default function AnswerScreen() {
         if (params.cardOfDay) logActivity('card_of_day_answered', card);
         noteAnswerSaved(question.cardId);
         toast(`Saved to ${monthName(new Date())}.`);
+        offerNotificationsOnce(() => syncReminders(profile).catch(() => {}));
       }
       goBack();
     } catch {
