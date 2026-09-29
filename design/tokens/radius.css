@@ -1,0 +1,14 @@
+:root{
+  /* Soft but not bubbly. Pills for actions, gentle rounding for surfaces, 0 for full-bleed. */
+  --radius-none:0;
+  --radius-xs:4px;
+  --radius-sm:8px;
+  --radius-md:12px;
+  --radius-lg:20px;
+  --radius-xl:28px;
+  --radius-pill:999px;
+  --radius-card:var(--radius-lg);
+  --radius-input:var(--radius-sm);
+  --radius-button:var(--radius-pill);
+  --radius-image:var(--radius-lg);
+}

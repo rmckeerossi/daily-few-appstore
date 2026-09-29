@@ -1,9 +1,5 @@
 {
-  "model": "claude-opus-4-8[1m]",
-  "permissions": {
-    "deny": [
-      "Edit(app/generated/**)",
-      "Write(app/generated/**)"
-    ]
+  "enabledPlugins": {
+    "expo@claude-plugins-official": true
   }
 }

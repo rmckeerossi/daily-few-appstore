@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/daily-few-design-system-4946127f-8a5a-4831-9e45-986755852729/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/daily-few-design-system-4946127f-8a5a-4831-9e45-986755852729/tokens/colors.css">
+<link rel="stylesheet" href="_ds/daily-few-design-system-4946127f-8a5a-4831-9e45-986755852729/tokens/typography.css">
+<link rel="stylesheet" href="_ds/daily-few-design-system-4946127f-8a5a-4831-9e45-986755852729/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/daily-few-design-system-4946127f-8a5a-4831-9e45-986755852729/tokens/radius.css">
+<link rel="stylesheet" href="_ds/daily-few-design-system-4946127f-8a5a-4831-9e45-986755852729/tokens/elevation.css">
+<link rel="stylesheet" href="_ds/daily-few-design-system-4946127f-8a5a-4831-9e45-986755852729/tokens/motion.css">
+<link rel="stylesheet" href="_ds/daily-few-design-system-4946127f-8a5a-4831-9e45-986755852729/tokens/base.css">
+<link rel="stylesheet" href="_ds/daily-few-design-system-4946127f-8a5a-4831-9e45-986755852729/styles.css">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.js"></script>
+<script src="_ds/daily-few-design-system-4946127f-8a5a-4831-9e45-986755852729/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:#F4F0DC;}
+a{color:#4C1C31;}a:hover{color:#8A365A;}
+textarea::placeholder,input::placeholder{color:rgba(254,252,242,.42);}
+.dfx::-webkit-scrollbar{display:none}
+.dfx>*{flex-shrink:0}
+</style>
+</helmet>
+<div style="min-height:100vh;display:flex;flex-wrap:wrap;gap:56px;align-items:flex-start;justify-content:center;padding:48px 40px;box-sizing:border-box;font-family:var(--font-sans);">
+
+  <aside style="width:300px;display:flex;flex-direction:column;gap:28px;color:var(--df-burgundy);padding-top:8px;">
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <img src="assets/logo-burgundy.png" alt="dailyfew" style="height:24px;width:auto;align-self:flex-start;">
+      <h1 style="margin:0;font:300 38px/1.08 var(--font-display);letter-spacing:-.02em;">Reflection app, <em>MVP</em> prototype</h1>
+      <p style="margin:0;font:400 14px/1.6 var(--font-sans);color:var(--cream-700);">Clickable. Every flow from the PRD runs inside the phone. Jump to a flow below.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px;">
+      <div style="font:500 10.5px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--cream-600);padding-bottom:8px;">Flows</div>
+      <sc-for list="{{ flows }}" as="fl" hint-placeholder-count="9">
+        <button onClick="{{ fl.go }}" style="display:flex;width:100%;align-items:baseline;gap:12px;text-align:left;background:{{ fl.bg }};border:0;border-radius:10px;padding:9px 12px;cursor:pointer;color:var(--df-burgundy);font:400 15px/1.3 var(--font-sans);" style-hover="background:rgba(76,28,49,.06)">
+          <span style="font:500 11px/1 var(--font-mono);color:var(--burgundy-500);width:18px;">{{ fl.k }}</span>
+          <span style="flex:1;min-width:0;">{{ fl.label }}</span>
+        </button>
+      </sc-for>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--cream-300);padding-top:20px;">
+      <div style="font:500 10.5px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--cream-600);">Design decisions</div>
+      <p style="margin:0;font:400 13px/1.6 var(--font-sans);color:var(--cream-700);">Night mode of the brand. Burgundy 900 is the sky, the burgundy to plum gradient is the card, lilac marks progress. Cards are drawn like a physical deck, so the physical-card origin carries into the app.</p>
+      <p style="margin:0;font:400 13px/1.6 var(--font-sans);color:var(--cream-700);">Sheets and the shared-link web page flip to the light cream palette so moments that leave the private space read differently.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--cream-300);padding-top:20px;">
+      <div style="font:500 10.5px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--cream-600);">Placeholders, please confirm</div>
+      <p style="margin:0;font:400 13px/1.6 var(--font-sans);color:var(--cream-700);">Seasons of life, deck names, September deck and all questions are stand-ins. The home ring shows days reflected this month; that touches the open question on personal stats. Photos are placeholders.</p>
+    </div>
+  </aside>
+
+  <div data-screen-label="Phone" style="position:relative;width:390px;height:844px;border-radius:56px;background:{{ phoneBg }};overflow:hidden;box-shadow:0 0 0 10px #1a0a12,0 0 0 11px #4C1C31,0 40px 90px rgba(40,14,26,.35);flex:none;">
+
+    <sc-if value="{{ showStars }}" hint-placeholder-val="{{ true }}">
+      <div style="position:absolute;inset:0;pointer-events:none;">
+        <div style="position:absolute;left:-40%;right:-40%;top:-30%;height:60%;background:radial-gradient(closest-side,rgba(138,54,90,.45),rgba(138,54,90,0));"></div>
+        <sc-for list="{{ stars }}" as="st" hint-placeholder-count="0">
+          <div style="position:absolute;left:{{ st.x }}%;top:{{ st.y }}%;width:{{ st.s }}px;height:{{ st.s }}px;border-radius:50%;background:#FEFCF2;opacity:{{ st.o }};"></div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- SIGN UP -->
+    <sc-if value="{{ s.signup }}" hint-placeholder-val="{{ false }}">
+      <div class="dfx" data-screen-label="Sign up" style="position:absolute;inset:0;overflow-y:auto;scrollbar-width:none;padding:72px 24px 48px;box-sizing:border-box;color:var(--df-pale-cream);display:flex;flex-direction:column;gap:28px;">
+        <img src="assets/logo-white.png" alt="dailyfew" style="height:20px;width:auto;align-self:flex-start;">
+        <sc-if value="{{ fromShare }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:10px;align-items:center;padding:12px 14px;border-radius:14px;background:rgba(209,219,255,.12);font:400 13px/1.45 var(--font-sans);color:var(--lilac-100);">
+            <x-import component-from-global-scope="DailyFewDesignSystem_494612.Icon" name="mail-open" size="{{ 18 }}" hint-size="18px,18px"></x-import>
+            <span>Sign up and we'll open the card you were sent.</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ blocked }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:16px;padding-top:40px;">
+            <h2 style="margin:0;font:300 44px/1.06 var(--font-display);letter-spacing:-.02em;color:#FEFCF2;">Come back when you're <em>18.</em></h2>
+            <p style="margin:0;font:300 16px/1.6 var(--font-sans);color:rgba(254,252,242,.78);">Daily Few is for adults 18 and older. We didn't create an account or keep any of your details.</p>
+            <div style="padding-top:12px;"><x-import component-from-global-scope="DailyFewDesignSystem_494612.Button" variant="inverse" onClick="{{ resetSignup }}" hint-size="120px,44px">Back</x-import></div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ notBlocked }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <h2 style="margin:0;font:300 44px/1.04 var(--font-display);letter-spacing:-.02em;color:#FEFCF2;">A few questions,<br><em>just for you.</em></h2>
+            <p style="margin:0;font:300 15px/1.6 var(--font-sans);color:rgba(254,252,242,.78);">Pull a card, answer privately, and look back month by month.</p>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:18px;">
+            <sc-for list="{{ fields }}" as="fd" hint-placeholder-count="4">
+              <label style="display:flex;flex-direction:column;gap:8px;">
+                <span style="font:500 10.5px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:rgba(254,252,242,.66);">{{ fd.label }}</span>
+                <input type="{{ fd.type }}" value="{{ fd.value }}" onChange="{{ fd.onChange }}" placeholder="{{ fd.ph }}" style="height:48px;box-sizing:border-box;padding:0 14px;border-radius:8px;border:1px solid {{ fd.border }};background:rgba(254,252,242,.06);color:#FEFCF2;font:400 16px/1 var(--font-sans);outline:none;color-scheme:dark;" style-focus="border-color:#D1DBFF;box-shadow:0 0 0 3px rgba(209,219,255,.22)">
+                <sc-if value="{{ fd.err }}" hint-placeholder-val="{{ false }}"><span style="font:400 12px/1.4 var(--font-sans);color:#F2B8C6;">{{ fd.err }}</span></sc-if>
+              </label>
+            </sc-for>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <span style="font:500 10.5px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:rgba(254,252,242,.66);">Season of life</span>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                <sc-for list="{{ signupSeasons }}" as="se" hint-placeholder-count="5">
+                  <button onClick="{{ se.pick }}" style="border-radius:999px;padding:9px 14px;border:1px solid {{ se.border }};background:{{ se.bg }};color:{{ se.fg }};font:400 13px/1 var(--font-sans);cursor:pointer;">{{ se.name }}</button>
+                </sc-for>
+              </div>
+              <sc-if value="{{ errs.season }}" hint-placeholder-val="{{ false }}"><span style="font:400 12px/1.4 var(--font-sans);color:#F2B8C6;">{{ errs.season }}</span></sc-if>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px;padding-top:4px;">
+              <sc-for list="{{ consents }}" as="cn" hint-placeholder-count="2">
+                <button onClick="{{ cn.toggle }}" style="display:flex;gap:12px;align-items:center;background:none;border:0;padding:0;cursor:pointer;color:rgba(254,252,242,.86);font:400 14px/1.4 var(--font-sans);text-align:left;">
+                  <span style="width:20px;height:20px;border-radius:4px;border:1px solid {{ cn.border }};background:{{ cn.bg }};display:flex;align-items:center;justify-content:center;color:#4C1C31;flex:none;">
+                    <sc-if value="{{ cn.on }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="DailyFewDesignSystem_494612.Icon" name="check" size="{{ 14 }}" stroke="{{ 2 }}" hint-size="14px,14px"></x-import></sc-if>
+                  </span>
+                  <span>{{ cn.label }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <x-import component-from-global-scope="DailyFewDesignSystem_494612.Button" variant="inverse" size="lg" fullWidth="{{ true }}" onClick="{{ submitSignup }}" hint-size="100%,54px">Create account</x-import>
+            <span style="text-align:center;font:400 12px/1.4 var(--font-sans);color:rgba(254,252,242,.6);">You must be 18 or older. Your answers are only ever visible to you.</span>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- HOME -->
+    <sc-if value="{{ s.home }}" hint-placeholder-val="{{ true }}">
+      <div class="dfx" data-screen-label="Home" style="position:absolute;inset:0;overflow-y:auto;scrollbar-width:none;padding:64px 22px 124px;box-sizing:border-box;color:var(--df-pale-cream);display:flex;flex-direction:column;gap:30px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <span style="font:500 10.5px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:rgba(254,252,242,.66);">Saturday · Sep 26</span>
+            <span style="font:300 34px/1.08 var(--font-display);letter-spacing:-.02em;">Good evening, {{ name }}</span>
+          </div>
+          <img src="assets/submark-white.png" alt="" style="width:30px;height:auto;opacity:.9;margin-top:4px;">
+        </div>
+
+        <div style="position:relative;width:286px;height:286px;align-self:center;">
+          <sc-for list="{{ ring }}" as="r" hint-placeholder-count="30">
+            <div style="position:absolute;left:{{ r.x }}px;top:{{ r.y }}px;width:{{ r.s }}px;height:{{ r.s }}px;border-radius:50%;background:{{ r.bg }};border:1px solid {{ r.bd }};box-sizing:border-box;box-shadow:{{ r.glow }};"></div>
+          </sc-for>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;">
+            <span style="font:500 10.5px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--lilac-200);">September</span>
+            <span style="font:300 52px/1 var(--font-display);letter-spacing:-.02em;">4 days</span>
+            <span style="font:400 13px/1.4 var(--font-sans);color:rgba(254,252,242,.72);max-width:150px;">until your September recap</span>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;">
+            <span style="font:500 10.5px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:rgba(254,252,242,.66);white-space:nowrap;">Card of the day</span>
+            <span style="font:400 12px/1.3 var(--font-sans);color:rgba(254,252,242,.6);text-align:right;">Same card for everyone</span>
+          </div>
+          <div style="position:relative;height:300px;border-radius:24px;overflow:hidden;background:radial-gradient(120% 70% at 50% 115%,rgba(209,219,255,.55),rgba(209,219,255,0) 62%),linear-gradient(160deg,#531832 0%,#8A365A 100%);border:1px solid rgba(209,219,255,.32);padding:26px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;align-items:center;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.35);">
+            <img src="assets/submark-white.png" alt="" style="width:26px;height:auto;opacity:.85;">
+            <span style="font:300 32px/1.12 var(--font-display);letter-spacing:-.01em;text-wrap:balance;">{{ cotd.text }}</span>
+            <span style="font:500 10px/1.2 var(--font-mono);letter-spacing:.18em;text-transform:uppercase;color:rgba(254,252,242,.8);">{{ cotd.deck }} · {{ cotd.cat }}</span>
+          </div>
+          <sc-if value="{{ cotdDone }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-radius:999px;background:rgba(209,219,255,.12);">
+              <span style="display:flex;gap:10px;align-items:center;font:400 14px/1 var(--font-sans);color:var(--lilac-100);"><x-import component-from-global-scope="DailyFewDesignSystem_494612.Icon" name="check" size="{{ 18 }}" hint-size="18px,18px"></x-import>{{ cotdDoneLabel }}</span>
+              <button onClick="{{ answerCotd }}" style="background:none;border:0;color:#FEFCF2;font:500 12px/1 var(--font-sans);letter-spacing:.04em;text-transform:uppercase;cursor:pointer;">Add another</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{ cotdOpen }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;gap:10px;align-items:center;">
+              <div style="flex:1;"><x-import component-from-global-scope="DailyFewDesignSystem_494612.Button" variant="inverse" size="lg" fullWidth="{{ true }}" onClick="{{ answerCotd }}" hint-size="100%,54px">Answer</x-import></div>
+              <button onClick="{{ reflectCotd }}" aria-label="Mark as reflected" style="width:54px;height:54px;border-radius:50%;border:1px solid rgba(254,252,242,.28);background:transparent;color:#FEFCF2;display:flex;align-items:center;justify-content:center;cursor:pointer;" style-hover="background:rgba(254,252,242,.08)"><x-import component-from-global-scope="DailyFewDesignSystem_494612.Icon" name="check" size="{{ 20 }}" hint-size="20px,20px"></x-import></button>
+              <button onClick="{{ shareCotd }}" aria-label="Share" style="width:54px;height:54px;border-radius:50%;border:1px solid rgba(254,252,242,.28);background:transparent;color:#FEFCF2;display:flex;align-items:center;justify-content:center;cursor:pointer;" style-hover="background:rgba(254,252,242,.08)"><x-import component-from-global-scope="DailyFewDesignSystem_494612.Icon" name="send" size="{{ 20 }}" hint-size="20px,20px"></x-import></button>
+            </div>
+          </sc-if>
+        </div>
+
+        <sc-for list="{{ homeDecks }}" as="d" hint-placeholder-count="2">
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <span style="font:500 10.5px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:rgba(254,252,242,.66);">{{ d.eyebrow }}</span>
+            <button onClick="{{ d.open }}" style="display:flex;gap:18px;align-items:center;text-align:left;padding:16px;border-radius:20px;border:1px solid rgba(254,252,242,.14);background:rgba(254,252,242,.04);color:#FEFCF2;cursor:pointer;transition:transform 160ms cubic-bezier(.4,0,.2,1),background 160ms;" style-hover="background:rgba(254,252,242,.08);transform:translateY(-2px)">
+              <div style="position:relative;width:62px;height:86px;flex:none;">
+                <div style="position:absolute;inset:0;border-radius:10px;background:{{ d.art }};transform:rotate(-8deg) translate(-4px,2px);opacity:.5;"></div>
+                <div style="position:absolute;inset:0;border-radius:10px;background:{{ d.art }};border:1px solid rgba(209,219,255,.3);"></div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:0;">
+                <span style="font:300 25px/1.1 var(--font-display);letter-spacing:-.01em;">{{ d.name }}</span>
+                <span style="font:400 13px/1.45 var(--font-sans);color:rgba(254,252,242,.72);">{{ d.desc }}</span>
+                <span style="font:500 10px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--lilac-200);padding-top:2px;">{{ d.meta }}</span>
+              </div>
+            </button>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- LIBRARY -->
+    <sc-if value="{{ s.library }}" hint-placeholder-val="{{ false }}">
+      <div class="dfx" data-screen-label="Library" style="position:absolute;inset:0;overflow-y:auto;scrollbar-width:none;padding:64px 22px 124px;box-sizing:border-box;color:var(--df-pale-cream);display:flex;flex-direction:column;gap:24px;">
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <span style="font:500 10.5px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:rgba(254,252,242,.66);">Library</span>
+          <span style="font:300 38px/1.06 var(--font-display);letter-spacing:-.02em;">Pick a deck</span>
+        </div>
+        <div style="display:flex;padding:4px;border-radius:999px;background:rgba(209,219,255,.1);">
+          <sc-for list="{{ libTabs }}" as="t" hint-placeholder-count="3">
+            <button onClick="{{ t.pick }}" style="flex:1;height:34px;border-radius:999px;border:0;background:{{ t.bg }};color:{{ t.fg }};font:500 10.5px/1 var(--font-mono);letter-spacing:.14em;text-transform:uppercase;cursor:pointer;">{{ t.label }}</button>
+          </sc-for>
+        </div>
+        <sc-for list="{{ libDecks }}" as="d" hint-placeholder-count="4">
+          <button onClick="{{ d.open }}" style="display:flex;flex-direction:column;gap:0;text-align:left;border-radius:22px;border:1px solid rgba(254,252,242,.14);background:rgba(254,252,242,.04);color:#FEFCF2;cursor:pointer;overflow:hidden;padding:0;transition:transform 160ms cubic-bezier(.4,0,.2,1),background 160ms;" style-hover="background:rgba(254,252,242,.08);transform:translateY(-2px)">
+            <div style="position:relative;height:{{ d.artH }}px;background:{{ d.art }};display:flex;align-items:flex-end;padding:16px 18px;box-sizing:border-box;">
+              <sc-if value="{{ d.badge }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:14px;left:16px;font:500 10px/1 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;padding:6px 10px;border-radius:999px;background:#FEFCF2;color:#4C1C31;">{{ d.badge }}</span></sc-if>
+              <span style="font:300 30px/1.05 var(--font-display);letter-spacing:-.02em;">{{ d.name }}</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;padding:14px 18px 18px;">
+              <span style="font:400 13px/1.5 var(--font-sans);color:rgba(254,252,242,.74);">{{ d.desc }}</span>
+              <span style="font:500 10px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--lilac-200);">{{ d.meta }}</span>
+            </div>
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- DECK -->
+    <sc-if value="{{ s.deck }}" hint-placeholder-val="{{ false }}">
+      <div class="dfx" data-screen-label="Deck" style="position:absolute;inset:0;overflow-y:auto;scrollbar-width:none;padding:0 0 124px;box-sizing:border-box;color:var(--df-pale-cream);display:flex;flex-direction:column;">
+        <div style="position:relative;padding:60px 22px 28px;background:{{ deck.art }};display:flex;flex-direction:column;gap:14px;">
+          <button onClick="{{ go.library }}" aria-label="Back" style="align-self:flex-start;width:40px;height:40px;border-radius:50%;border:1px solid rgba(254,252,242,.3);background:rgba(40,14,26,.2);color:#FEFCF2;display:flex;align-items:center;justify-content:center;cursor:pointer;"><x-import component-from-global-scope="DailyFewDesignSystem_494612.Icon" name="chevron-left" size="{{ 20 }}" hint-size="20px,20px"></x-import></button>
+          <span style="font:500 10.5px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:rgba(254,252,242,.8);padding-top:40px;">{{ deck.type }} · {{ deck.tag }}</span>
+          <span style="font:300 44px/1.02 var(--font-display);letter-spacing:-.02em;">{{ deck.name }}</span>
+          <span style="font:300 15px/1.55 var(--font-sans);color:rgba(254,252,242,.86);">{{ deck.desc }}</span>
+          <span style="font:500 10.5px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:#FEFCF2;">{{ deck.meta }}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;padding:24px 22px 0;">
+          <span style="font:500 10.5px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:rgba(254,252,242,.66);padding-bottom:4px;">Choose a category</span>
+          <sc-for list="{{ deckCats }}" as="c" hint-placeholder-count="6">
+            <button onClick="{{ c.open }}" style="display:flex;flex-direction:column;gap:12px;text-align:left;padding:16px 18px;border-radius:18px;border:1px solid rgba(254,252,242,.14);background:rgba(254,252,242,.04);color:#FEFCF2;cursor:pointer;" style-hover="background:rgba(254,252,242,.08)">
+              <div style="display:flex;justify-content:space-between;align-items:center;width:100%;">
+                <span style="font:400 23px/1.1 var(--font-display);">{{ c.name }}</span>
+                <x-import component-from-global-scope="DailyFewDesignSystem_494612.Icon" name="chevron-right" size="{{ 18 }}" hint-size="18px,18px"></x-import>
+              </div>
+              <div style="display:flex;gap:12px;align-items:center;width:100%;">
+                <div style="flex:1;height:3px;border-radius:2px;background:rgba(254,252,242,.14);overflow:hidden;"><div style="height:100%;width:{{ c.pct }}%;background:var(--lilac-200);"></div></div>
+                <span style="font:400 11px/1 var(--font-mono);color:rgba(254,252,242,.7);">{{ c.prog }}</span>
+              </div>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- DRAW -->
+    <sc-if value="{{ s.draw }}" hint-placeholder-val="{{ false }}">
+      <div class="dfx" data-screen-label="Draw" style="position:absolute;inset:0;overflow-y:auto;scrollbar-width:none;padding:58px 22px 124px;box-sizing:border-box;color:var(--df-pale-cream);display:flex;flex-direction:column;gap:22px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <button onClick="{{ backFromDraw }}" aria-label="Back" style="width:40px;height:40px;border-radius:50%;border:1px solid rgba(254,252,242,.24);background:transparent;color:#FEFCF2;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;"><x-import component-from-global-scope="DailyFewDesignSystem_494612.Icon" name="chevron-left" size="{{ 20 }}" hint-size="20px,20px"></x-import></button>
+          <button onClick="{{ openSwitch }}" style="display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:0;color:#FEFCF2;cursor:pointer;min-width:0;">
+            <span style="font:500 10px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:rgba(254,252,242,.66);">{{ card.deck }}</span>
+            <span style="display:flex;gap:4px;align-items:center;font:400 15px/1.2 var(--font-sans);">{{ card.cat }}<x-import component-from-global-scope="DailyFewDesignSystem_494612.Icon" name="chevron-down" size="{{ 16 }}" hint-size="16px,16px"></x-import></span>
+          </button>
+          <div style="width:40px;flex:none;"></div>
+        </div>
+
+        <div style="position:relative;height:392px;">
+          <div style="position:absolute;inset:14px 18px 0;border-radius:24px;background:linear-gradient(160deg,#3A1526,#6B2743);border:1px solid rgba(209,219,255,.16);transform:rotate(-5deg);"></div>
+          <div style="position:absolute;inset:8px 12px 4px;border-radius:24px;background:linear-gradient(160deg,#4C1C31,#6B2743);border:1px solid rgba(209,219,255,.2);transform:rotate(4deg);"></div>
+          <div style="position:absolute;inset:0 4px 12px;border-radius:24px;overflow:hidden;background:radial-gradient(120% 70% at 50% 115%,rgba(209,219,255,.55),rgba(209,219,255,0) 62%),linear-gradient(160deg,#531832 0%,#8A365A 100%);border:1px solid rgba(209,219,255,.34);padding:26px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;align-items:center;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.4);opacity:{{ fade }};transform:translateY({{ lift }}px);transition:opacity 240ms cubic-bezier(.16,1,.3,1),transform 420ms cubic-bezier(.16,1,.3,1);">
+            <span style="font:500 10px/1.2 var(--font-mono);letter-spacing:.18em;text-transform:uppercase;color:rgba(254,252,242,.82);">{{ card.cat }}</span>
+            <span style="font:300 34px/1.12 var(--font-display);letter-spacing:-.01em;text-wrap:balance;">{{ card.text }}</span>
+            <img src="assets/submark-white.png" alt="" style="width:26px;height:auto;opacity:.85;">
+          </div>
+        </div>
+
+        <sc-if value="{{ savedPanel }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:16px;padding:22px;border-radius:22px;background:rgba(209,219,255,.1);">
+            <div style="display:flex;gap:12px;align-items:center;">
+              <span style="width:34px;height:34px;border-radius:50%;background:var(--lilac-200);color:#4C1C31;display:flex;align-items:center;justify-content:center;"><x-import component-from-global-scope="DailyFewDesignSystem_494612.Icon" name="check" size="{{ 18 }}" stroke="{{ 2 }}" hint-size="18px,18px"></x-import></span>
+              <span style="font:300 26px/1.1 var(--font-display);">{{ savedLabel }}</span>
+            </div>
+            <x-import component-from-global-scope="DailyFewDesignSystem_494612.Button" variant="inverse" fullWidth="{{ true }}" onClick="{{ drawNext }}" hint-size="100%,44px">Draw another</x-import>
+            <div style="display:flex;gap:10px;">
+              <button onClick="{{ openSwitch }}" style="flex:1;height:44px;border-radius:999px;border:1px solid rgba(254,252,242,.4);background:transparent;color:#FEFCF2;font:500 12px/1 var(--font-sans);letter-spacing:.04em;text-transform:uppercase;cursor:pointer;" style-hover="background:#FEFCF2;color:#4C1C31">Switch category</button>
+              <button onClick="{{ go.home }}" style="flex:1;height:44px;border-radius:999px;border:0;background:transparent;color:#FEFCF2;font:500 12px/1 var(--font-sans);letter-spacing:.04em;text-transform:uppercase;cursor:pointer;" style-hover="background:rgba(254,252,242,.08)">Home</button>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ drawActions }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:18px;">
+            <div style="display:flex;justify-content:center;gap:34px;">
+              <sc-for list="{{ drawBtns }}" as="b" hint-placeholder-count="3">
+                <button onClick="{{ b.fn }}" style="display:flex;flex-direction:column;align-items:center;gap:8px;background:none;border:0;color:#FEFCF2;cursor:pointer;">
+                  <span style="width:54px;height:54px;border-radius:50%;border:1px solid rgba(254,252,242,.28);display:flex;align-items:center;justify-content:center;" style-hover="background:rgba(254,252,242,.08)"><x-import component-from-global-scope="DailyFewDesignSystem_494612.Icon" name="{{ b.icon }}" size="{{ 20 }}" hint-size="20px,20px"></x-import></span>
+                  <span style="font:500 10px/1 var(--font-mono);letter-spacing:.14em;text-transform:uppercase;color:rgba(254,252,242,.72);">{{ b.label }}</span>
+                </button>
+              </sc-for>
+            </div>
+            <x-import component-from-global-scope="DailyFewDesignSystem_494612.Button" variant="inverse" size="lg" fullWidth="{{ true }}" onClick="{{ answerCard }}" hint-size="100%,54px">Answer</x-import>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ hasPast }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:10px;padding-top:6px;">
+            <span style="font:500 10.5px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:rgba(254,252,242,.66);">{{ pastLabel }}</span>
+            <sc-for list="{{ past }}" as="p" hint-placeholder-count="2">
+              <button onClick="{{ p.open }}" style="display:flex;gap:14px;text-align:left;padding:14px 16px;border-radius:16px;border:1px solid rgba(254,252,242,.12);background:rgba(254,252,242,.04);color:#FEFCF2;cursor:pointer;" style-hover="background:rgba(254,252,242,.08)">
+                <span style="font:400 11px/1.5 var(--font-mono);color:var(--lilac-200);width:44px;flex:none;">{{ p.date }}</span>
+                <span style="font:400 14px/1.5 var(--font-sans);color:rgba(254,252,242,.86);">{{ p.preview }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- COMPOSE -->
+    <sc-if value="{{ s.compose }}" hint-placeholder-val="{{ false }}">
+      <div class="dfx" data-screen-label="Answer" style="position:absolute;inset:0;overflow-y:auto;scrollbar-width:none;padding:58px 22px 40px;box-sizing:border-box;color:var(--df-pale-cream);display:flex;flex-direction:column;gap:22px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <button onClick="{{ closeCompose }}" aria-label="Close" style="width:40px;height:40px;border-radius:50%;border:1px solid rgba(254,252,242,.24);background:transparent;color:#FEFCF2;display:flex;align-items:center;justify-content:center;cursor:pointer;"><x-import component-from-global-scope="DailyFewDesignSystem_494612.Icon" name="x" size="{{ 20 }}" hint-size="20px,20px"></x-import></button>
+          <span style="font:500 10.5px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:rgba(254,252,242,.66);white-space:nowrap;">{{ composeTitle }}</span>
+          <div style="width:40px;"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;padding:22px;border-radius:22px;background:linear-gradient(160deg,#531832 0%,#8A365A 100%);border:1px solid rgba(209,219,255,.26);">
+          <span style="font:500 10px/1.5 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:rgba(254,252,242,.8);text-wrap:balance;">{{ compose.deck }} · {{ compose.cat }}</span>
+          <span style="font:300 27px/1.14 var(--font-display);letter-spacing:-.01em;">{{ compose.q }}</span>
+        </div>
+        <textarea value="{{ compose.text }}" onChange="{{ setText }}" placeholder="Write as much or as little as you want." style="min-height:170px;resize:none;background:transparent;border:0;outline:none;color:#FEFCF2;font:300 18px/1.6 var(--font-sans);padding:0;"></textarea>
+
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <span style="font:500 10.5px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:rgba(254,252,242,.66);">Voice memo · up to 5 min</span>
+          <div style="display:flex;align-items:center;gap:14px;padding:12px 14px 12px 12px;border-radius:999px;border:1px solid {{ voiceBorder }};background:rgba(254,252,242,.04);">
+            <button onClick="{{ toggleRec }}" aria-label="Record" style="width:46px;height:46px;border-radius:50%;border:0;background:{{ recBg }};color:{{ recFg }};display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;"><x-import component-from-global-scope="DailyFewDesignSystem_494612.Icon" name="{{ recIcon }}" size="{{ 20 }}" hint-size="20px,20px"></x-import></button>
+            <div style="flex:1;display:flex;align-items:center;gap:3px;height:32px;overflow:hidden;">
+              <sc-for list="{{ bars }}" as="br" hint-placeholder-count="26">
+                <div style="width:3px;border-radius:2px;height:{{ br.h }}px;background:{{ br.c }};flex:none;"></div>
+              </sc-for>
+            </div>
+            <span style="font:400 12px/1 var(--font-mono);color:rgba(254,252,242,.8);flex:none;">{{ recTime }}</span>
+            <sc-if value="{{ canDelVoice }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ delVoice }}" aria-label="Delete voice memo" style="background:none;border:0;color:rgba(254,252,242,.7);cursor:pointer;display:flex;padding:4px;"><x-import component-from-global-scope="DailyFewDesignSystem_494612.Icon" name="trash-2" size="{{ 18 }}" hint-size="18px,18px"></x-import></button>
+            </sc-if>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <span style="font:500 10.5px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:rgba(254,252,242,.66);">{{ photoLabel }}</span>
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;">
+            <sc-for list="{{ photoSlots }}" as="ph" hint-placeholder-count="3">
+              <button onClick="{{ ph.fn }}" style="position:relative;aspect-ratio:1;border-radius:16px;border:1px solid {{ ph.border }};background:{{ ph.bg }};color:rgba(254,252,242,.8);display:flex;flex-direction:column;gap:6px;align-items:center;justify-content:center;cursor:pointer;font:400 11px/1 var(--font-mono);">
+                <x-import component-from-global-scope="DailyFewDesignSystem_494612.Icon" name="{{ ph.icon }}" size="{{ 20 }}" hint-size="20px,20px"></x-import>
+                <span>{{ ph.label }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px;padding-top:6px;">
+          <x-import component-from-global-scope="DailyFewDesignSystem_494612.Button" variant="inverse" size="lg" fullWidth="{{ true }}" disabled="{{ saveDisabled }}" onClick="{{ saveAnswer }}" hint-size="100%,54px">Save answer</x-import>
+          <span style="display:flex;gap:6px;align-items:center;justify-content:center;font:400 12px/1.4 var(--font-sans);color:rgba(254,252,242,.6);"><x-import component-from-global-scope="DailyFewDesignSystem_494612.Icon" name="lock" size="{{ 14 }}" hint-size="14px,14px"></x-import>Only you can see this.</span>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- HISTORY -->
+    <sc-if value="{{ s.history }}" hint-placeholder-val="{{ false }}">
+      <div class="dfx" data-screen-label="History" style="position:absolute;inset:0;overflow-y:auto;scrollbar-width:none;padding:64px 22px 124px;box-sizing:border-box;color:var(--df-pale-cream);display:flex;flex-direction:column;gap:24px;">
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <span style="font:500 10.5px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:rgba(254,252,242,.66);">Look back</span>
+          <span style="font:300 38px/1.06 var(--font-display);letter-spacing:-.02em;">Your history</span>
+        </div>
+        <div style="display:flex;padding:4px;border-radius:999px;background:rgba(209,219,255,.1);">
+          <sc-for list="{{ histTabs }}" as="t" hint-placeholder-count="2">
+            <button onClick="{{ t.pick }}" style="flex:1;height:34px;border-radius:999px;border:0;background:{{ t.bg }};color:{{ t.fg }};font:500 10.5px/1 var(--font-mono);letter-spacing:.14em;text-transform:uppercase;cursor:pointer;">{{ t.label }}</button>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ byMonth }}" hint-placeholder-val="{{ true }}">
+          <sc-for list="{{ months }}" as="m" hint-placeholder-count="2">
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;">
+                <span style="font:300 26px/1.1 var(--font-display);">{{ m.label }}</span>
+                <span style="font:400 11px/1 var(--font-mono);color:var(--lilac-200);">{{ m.count }}</span>
+              </div>
+              <sc-if value="{{ m.current }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ openNote }}" style="display:flex;flex-direction:column;gap:8px;text-align:left;padding:18px;border-radius:20px;border:0;background:rgba(209,219,255,.12);color:#FEFCF2;cursor:pointer;" style-hover="background:rgba(209,219,255,.18)">
+                  <span style="display:flex;justify-content:space-between;width:100%;font:500 10px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--lilac-200);">September note<x-import component-from-global-scope="DailyFewDesignSystem_494612.Icon" name="pencil" size="{{ 16 }}" hint-size="16px,16px"></x-import></span>
+                  <span style="font:400 14px/1.55 var(--font-sans);color:rgba(254,252,242,.88);">{{ note.text }}</span>
+                  <span style="font:400 11px/1 var(--font-mono);color:rgba(254,252,242,.6);">{{ notePhotos }}</span>
+                </button>
+              </sc-if>
+              <sc-if value="{{ m.past }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ go.recap }}" style="display:flex;justify-content:space-between;align-items:center;text-align:left;padding:18px;border-radius:20px;border:1px solid rgba(209,219,255,.26);background:radial-gradient(100% 120% at 100% 100%,rgba(209,219,255,.4),rgba(209,219,255,0) 60%),linear-gradient(160deg,#531832,#8A365A);color:#FEFCF2;cursor:pointer;">
+                  <span style="display:flex;flex-direction:column;gap:6px;"><span style="font:500 10px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:rgba(254,252,242,.8);">Monthly recap</span><span style="font:300 24px/1.1 var(--font-display);">Your {{ m.short }}, looked back on</span></span>
+                  <x-import component-from-global-scope="DailyFewDesignSystem_494612.Icon" name="arrow-right" size="{{ 20 }}" hint-size="20px,20px"></x-import>
+                </button>
+              </sc-if>
+              <sc-for list="{{ m.items }}" as="a" hint-placeholder-count="3">
+                <button onClick="{{ a.open }}" style="display:flex;gap:14px;text-align:left;padding:14px 4px;border:0;border-bottom:1px solid rgba(254,252,242,.1);background:none;color:#FEFCF2;cursor:pointer;">
+                  <span style="display:flex;flex-direction:column;align-items:center;gap:3px;width:34px;flex:none;padding-top:3px;"><span style="font:500 9.5px/1 var(--font-mono);letter-spacing:.12em;color:rgba(254,252,242,.6);">{{ a.mon }}</span><span style="font:300 24px/1 var(--font-display);">{{ a.day }}</span></span>
+                  <span style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:0;">
+                    <span style="font:400 19px/1.2 var(--font-display);">{{ a.q }}</span>
+                    <span style="font:400 13px/1.45 var(--font-sans);color:rgba(254,252,242,.68);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">{{ a.preview }}</span>
+                    <span style="display:flex;gap:10px;color:var(--lilac-200);padding-top:2px;">
+                      <sc-for list="{{ a.fmts }}" as="ic" hint-placeholder-count="1"><x-import component-from-global-scope="DailyFewDesignSystem_494612.Icon" name="{{ ic }}" size="{{ 14 }}" hint-size="14px,14px"></x-import></sc-for>
+                    </span>
+                  </span>
+                </button>
+              </sc-for>
+            </div>
+          </sc-for>
+        </sc-if>
+
+        <sc-if value="{{ byCard }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <sc-for list="{{ cardGroups }}" as="g" hint-placeholder-count="5">
+              <button onClick="{{ g.open }}" style="display:flex;justify-content:space-between;align-items:center;gap:14px;text-align:left;padding:16px 18px;border-radius:18px;border:1px solid rgba(254,252,242,.14);background:rgba(254,252,242,.04);color:#FEFCF2;cursor:pointer;" style-hover="background:rgba(254,252,242,.08)">
+                <span style="display:flex;flex-direction:column;gap:8px;min-width:0;">
+                  <span style="font:400 20px/1.2 var(--font-display);">{{ g.q }}</span>
+                  <span style="font:500 10px/1.3 var(--font-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--lilac-200);">{{ g.meta }}</span>
+                </span>
+                <x-import component-from-global-scope="DailyFewDesignSystem_494612.Icon" name="chevron-right" size="{{ 18 }}" hint-size="18px,18px"></x-import>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- RECAP -->
+    <sc-if value="{{ s.recap }}" hint-placeholder-val="{{ false }}">
+      <div class="dfx" data-screen-label="Recap" style="position:absolute;inset:0;overflow-y:auto;scrollbar-width:none;padding:0 0 48px;box-sizing:border-box;color:var(--df-pale-cream);display:flex;flex-direction:column;gap:28px;">
+        <div style="position:relative;padding:58px 22px 30px;background:radial-gradient(120% 70% at 50% 120%,rgba(209,219,255,.6),rgba(209,219,255,0) 60%),linear-gradient(160deg,#531832 0%,#8A365A 100%);display:flex;flex-direction:column;gap:18px;">
+          <button onClick="{{ go.history }}" aria-label="Back" style="align-self:flex-start;width:40px;height:40px;border-radius:50%;border:1px solid rgba(254,252,242,.3);background:rgba(40,14,26,.2);color:#FEFCF2;display:flex;align-items:center;justify-content:center;cursor:pointer;"><x-import component-from-global-scope="DailyFewDesignSystem_494612.Icon" name="chevron-left" size="{{ 20 }}" hint-size="20px,20px"></x-import></button>
+          <span style="font:500 10.5px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:rgba(254,252,242,.82);padding-top:36px;">Monthly recap · 2026</span>
+          <span style="font:300 64px/.98 var(--font-display);letter-spacing:-.02em;">Your<br><em>August</em></span>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:14px;">
+            <div style="display:flex;flex-direction:column;gap:6px;padding:14px 16px;border-radius:16px;background:rgba(40,14,26,.28);"><span style="font:300 40px/1 var(--font-display);">{{ recap.count }}</span><span style="font:500 10px/1.2 var(--font-mono);letter-spacing:.14em;text-transform:uppercase;color:rgba(254,252,242,.82);">Cards answered</span></div>
+            <div style="display:flex;flex-direction:column;gap:6px;padding:14px 16px;border-radius:16px;background:rgba(40,14,26,.28);"><span style="font:300 40px/1 var(--font-display);">{{ recap.decks }}</span><span style="font:500 10px/1.2 var(--font-mono);letter-spacing:.14em;text-transform:uppercase;color:rgba(254,252,242,.82);">Decks used</span></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;padding:0 22px;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;"><span style="font:500 10.5px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:rgba(254,252,242,.66);">August note</span><span style="font:500 11px/1 var(--font-sans);letter-spacing:.04em;text-transform:uppercase;color:var(--lilac-200);">Edit</span></div>
+          <p style="margin:0;font:300 20px/1.45 var(--font-display);">Moved into the new place. Two weeks at the lake with the girls. Stopped checking email after 7.</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div style="aspect-ratio:4/5;border-radius:20px;background:rgba(209,219,255,.1);display:flex;align-items:center;justify-content:center;font:400 11px/1.4 var(--font-mono);color:rgba(254,252,242,.55);text-align:center;">Note photo 1</div>
+            <div style="aspect-ratio:4/5;border-radius:20px;background:rgba(209,219,255,.1);display:flex;align-items:center;justify-content:center;font:400 11px/1.4 var(--font-mono);color:rgba(254,252,242,.55);text-align:center;">Note photo 2</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;padding:0 22px;">
+          <span style="font:500 10.5px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:rgba(254,252,242,.66);padding-bottom:6px;">What you answered</span>
+          <sc-for list="{{ recap.items }}" as="a" hint-placeholder-count="4">
+            <button onClick="{{ a.open }}" style="display:flex;gap:14px;text-align:left;padding:14px 4px;border:0;border-bottom:1px solid rgba(254,252,242,.1);background:none;color:#FEFCF2;cursor:pointer;">
+              <span style="display:flex;flex-direction:column;align-items:center;gap:3px;width:34px;flex:none;padding-top:3px;"><span style="font:500 9.5px/1 var(--font-mono);letter-spacing:.12em;color:rgba(254,252,242,.6);">{{ a.mon }}</span><span style="font:300 24px/1 var(--font-display);">{{ a.day }}</span></span>
+              <span style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:0;"><span style="font:400 19px/1.2 var(--font-display);">{{ a.q }}</span><span style="font:400 13px/1.45 var(--font-sans);color:rgba(254,252,242,.68);">{{ a.preview }}</span></span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- PROFILE -->
+    <sc-if value="{{ s.profile }}" hint-placeholder-val="{{ false }}">
+      <div class="dfx" data-screen-label="Profile" style="position:absolute;inset:0;overflow-y:auto;scrollbar-width:none;padding:64px 22px 124px;box-sizing:border-box;color:var(--df-pale-cream);display:flex;flex-direction:column;gap:28px;">
+        <div style="display:flex;align-items:center;gap:16px;">
+          <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(160deg,#531832,#8A365A);border:1px solid rgba(209,219,255,.3);display:flex;align-items:center;justify-content:center;font:300 28px/1 var(--font-display);flex:none;">{{ initial }}</div>
+          <div style="display:flex;flex-direction:column;gap:4px;"><span style="font:300 32px/1.05 var(--font-display);">{{ name }}</span><span style="font:400 13px/1 var(--font-sans);color:rgba(254,252,242,.66);">{{ email }}</span></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <span style="font:500 10.5px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:rgba(254,252,242,.66);">Season of life</span>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            <sc-for list="{{ profSeasons }}" as="se" hint-placeholder-count="5">
+              <button onClick="{{ se.pick }}" style="border-radius:999px;padding:10px 15px;border:1px solid {{ se.border }};background:{{ se.bg }};color:{{ se.fg }};font:400 13px/1 var(--font-sans);cursor:pointer;">{{ se.name }}</button>
+            </sc-for>
+          </div>
+          <span style="font:400 12px/1.5 var(--font-sans);color:rgba(254,252,242,.6);">Changes which deck we recommend on home.</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <span style="font:500 10.5px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:rgba(254,252,242,.66);padding-bottom:8px;">Reminders and updates</span>
+          <sc-for list="{{ switches }}" as="sw" hint-placeholder-count="3">
+            <div style="display:flex;flex-direction:column;gap:12px;padding:14px 0;border-bottom:1px solid rgba(254,252,242,.1);">
+              <button onClick="{{ sw.toggle }}" style="display:flex;justify-content:space-between;align-items:center;gap:16px;background:none;border:0;padding:0;color:#FEFCF2;cursor:pointer;text-align:left;">
+                <span style="display:flex;flex-direction:column;gap:3px;"><span style="font:400 15px/1.3 var(--font-sans);">{{ sw.label }}</span><span style="font:400 12px/1.4 var(--font-sans);color:rgba(254,252,242,.6);">{{ sw.desc }}</span></span>
+                <span style="width:46px;height:28px;border-radius:999px;padding:3px;box-sizing:border-box;background:{{ sw.track }};flex:none;transition:background 160ms;"><span style="display:block;width:22px;height:22px;border-radius:50%;background:{{ sw.knob }};transform:translateX({{ sw.x }}px);transition:transform 160ms cubic-bezier(.4,0,.2,1);"></span></span>
+              </button>
+              <sc-if value="{{ sw.times }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <sc-for list="{{ remTimes }}" as="tm" hint-placeholder-count="3">
+                    <button onClick="{{ tm.pick }}" style="border-radius:999px;padding:9px 14px;border:1px solid {{ tm.border }};background:{{ tm.bg }};color:{{ tm.fg }};font:400 12px/1 var(--font-mono);cursor:pointer;">{{ tm.label }}</button>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;flex-direction:column;">
+          <span style="font:500 10.5px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:rgba(254,252,242,.66);padding-bottom:8px;">Account</span>
+          <button onClick="{{ signOut }}" style="display:flex;justify-content:space-between;align-items:center;padding:16px 0;background:none;border:0;border-bottom:1px solid rgba(254,252,242,.1);color:#FEFCF2;font:400 15px/1 var(--font-sans);cursor:pointer;">Sign out<x-import component-from-global-scope="DailyFewDesignSystem_494612.Icon" name="log-out" size="{{ 18 }}" hint-size="18px,18px"></x-import></button>
+          <button onClick="{{ askDelAccount }}" style="display:flex;justify-content:space-between;align-items:center;padding:16px 0;background:none;border:0;color:#F2B8C6;font:400 15px/1 var(--font-sans);cursor:pointer;">Delete account<x-import component-from-global-scope="DailyFewDesignSystem_494612.Icon" name="trash-2" size="{{ 18 }}" hint-size="18px,18px"></x-import></button>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- SHARED LINK (web, visitor) -->
+    <sc-if value="{{ s.shared }}" hint-placeholder-val="{{ false }}">
+      <div class="dfx" data-screen-label="Shared card web" style="position:absolute;inset:0;overflow-y:auto;scrollbar-width:none;background:#FEFCF2;padding:52px 0 40px;box-sizing:border-box;color:#4C1C31;display:flex;flex-direction:column;gap:26px;">
+        <div style="margin:0 16px;height:40px;border-radius:12px;background:#F4F0DC;display:flex;align-items:center;justify-content:center;gap:6px;font:400 14px/1 var(--font-sans);color:#544F42;"><x-import component-from-global-scope="DailyFewDesignSystem_494612.Icon" name="lock" size="{{ 13 }}" hint-size="13px,13px"></x-import>dailyfew.app/c/8K2Q</div>
+        <div style="display:flex;flex-direction:column;gap:22px;padding:8px 24px 0;">
+          <img src="assets/logo-burgundy.png" alt="dailyfew" style="height:20px;width:auto;align-self:center;">
+          <span style="text-align:center;font:500 10.5px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:#7C7663;">Someone sent you a question</span>
+          <div style="height:330px;border-radius:24px;overflow:hidden;background:radial-gradient(120% 70% at 50% 115%,rgba(209,219,255,.55),rgba(209,219,255,0) 62%),linear-gradient(160deg,#531832 0%,#8A365A 100%);padding:26px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;align-items:center;text-align:center;color:#FEFCF2;box-shadow:0 20px 44px rgba(40,14,26,.22);">
+            <img src="assets/submark-white.png" alt="" style="width:26px;height:auto;opacity:.85;">
+            <span style="font:300 32px/1.12 var(--font-display);letter-spacing:-.01em;text-wrap:balance;">{{ sharedQ.text }}</span>
+            <span style="font:500 10px/1.2 var(--font-mono);letter-spacing:.18em;text-transform:uppercase;color:rgba(254,252,242,.82);">{{ sharedQ.deck }}</span>
+          </div>
+          <p style="margin:0;text-align:center;font:400 15px/1.6 var(--font-sans);color:#332F28;">Answer it privately in the Daily Few app. Your answer stays with you. Nobody else sees it, including whoever sent this.</p>
+          <x-import component-from-global-scope="DailyFewDesignSystem_494612.Button" variant="primary" size="lg" fullWidth="{{ true }}" onClick="{{ sharedSignup }}" hint-size="100%,54px">Get the app to answer</x-import>
+          <button onClick="{{ sharedOpenApp }}" style="background:none;border:0;color:#4C1C31;font:400 14px/1 var(--font-sans);text-decoration:underline;text-underline-offset:.22em;cursor:pointer;">Already have it? Open in app</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- STATUS BAR -->
+    <div style="position:absolute;top:0;left:0;right:0;height:50px;display:flex;align-items:center;justify-content:space-between;padding:4px 32px 0 40px;box-sizing:border-box;color:{{ statusColor }};z-index:30;pointer-events:none;font:600 16px/1 -apple-system,system-ui,sans-serif;">
+      <span>9:41</span>
+      <div style="position:absolute;left:50%;top:11px;width:122px;height:35px;margin-left:-61px;border-radius:20px;background:#000;"></div>
+      <span style="display:flex;gap:6px;align-items:center;"><x-import component-from-global-scope="DailyFewDesignSystem_494612.Icon" name="signal" size="{{ 16 }}" stroke="{{ 2 }}" hint-size="16px,16px"></x-import><x-import component-from-global-scope="DailyFewDesignSystem_494612.Icon" name="wifi" size="{{ 16 }}" stroke="{{ 2 }}" hint-size="16px,16px"></x-import><x-import component-from-global-scope="DailyFewDesignSystem_494612.Icon" name="battery-full" size="{{ 20 }}" stroke="{{ 1.5 }}" hint-size="20px,20px"></x-import></span>
+    </div>
+
+    <!-- NAV -->
+    <sc-if value="{{ showNav }}" hint-placeholder-val="{{ true }}">
+      <div style="position:absolute;left:0;right:0;bottom:0;height:100px;background:linear-gradient(to top,rgba(40,14,26,1) 55%,rgba(40,14,26,0));z-index:20;display:flex;align-items:flex-start;justify-content:space-around;padding:22px 18px 0;box-sizing:border-box;">
+        <sc-for list="{{ nav }}" as="n" hint-placeholder-count="5">
+          <button onClick="{{ n.go }}" aria-label="{{ n.label }}" style="width:{{ n.w }}px;height:{{ n.w }}px;border-radius:50%;border:0;background:{{ n.bg }};color:{{ n.fg }};display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background 160ms;">
+            <x-import component-from-global-scope="DailyFewDesignSystem_494612.Icon" name="{{ n.icon }}" size="{{ 22 }}" hint-size="22px,22px"></x-import>
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+    <div style="position:absolute;bottom:8px;left:50%;width:134px;height:5px;margin-left:-67px;border-radius:3px;background:{{ statusColor }};z-index:40;opacity:.9;"></div>
+
+    <!-- TOAST -->
+    <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;top:58px;left:50%;transform:translateX(-50%);z-index:60;padding:12px 18px;border-radius:999px;background:#FEFCF2;color:#4C1C31;font:500 13px/1 var(--font-sans);box-shadow:0 8px 24px rgba(40,14,26,.3);white-space:nowrap;">{{ toast }}</div>
+    </sc-if>
+
+    <!-- SHEETS -->
+    <sc-if value="{{ dialog }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;inset:0;z-index:50;display:flex;flex-direction:column;justify-content:flex-end;">
+        <div onClick="{{ closeDialog }}" style="position:absolute;inset:0;background:rgba(40,14,26,.42);backdrop-filter:saturate(140%) blur(14px);-webkit-backdrop-filter:saturate(140%) blur(14px);"></div>
+        <div style="position:relative;background:#FEFCF2;color:#332F28;border-radius:28px 28px 0 0;padding:14px 24px 40px;display:flex;flex-direction:column;gap:18px;">
+          <div style="width:40px;height:4px;border-radius:2px;background:#E7E1C6;align-self:center;"></div>
+
+          <sc-if value="{{ d.discard }}" hint-placeholder-val="{{ false }}">
+            <h3 style="margin:0;font:300 30px/1.1 var(--font-display);color:#4C1C31;">Discard this answer?</h3>
+            <p style="margin:0;font:400 15px/1.6 var(--font-sans);">What you've added so far won't be saved.</p>
+            <x-import component-from-global-scope="DailyFewDesignSystem_494612.Button" variant="primary" fullWidth="{{ true }}" onClick="{{ closeDialog }}" hint-size="100%,44px">Keep going</x-import>
+            <x-import component-from-global-scope="DailyFewDesignSystem_494612.Button" variant="secondary" fullWidth="{{ true }}" onClick="{{ discard }}" hint-size="100%,44px">Discard</x-import>
+          </sc-if>
+
+          <sc-if value="{{ d.share }}" hint-placeholder-val="{{ false }}">
+            <h3 style="margin:0;font:300 30px/1.1 var(--font-display);color:#4C1C31;">Share this card</h3>
+            <div style="align-self:flex-end;max-width:84%;padding:12px 16px;border-radius:20px 20px 6px 20px;background:#4C1C31;color:#FEFCF2;font:400 15px/1.45 var(--font-sans);">{{ shareQ }}<br><span style="color:#D1DBFF;text-decoration:underline;">dailyfew.app/c/8K2Q</span></div>
+            <p style="margin:0;font:400 13px/1.5 var(--font-sans);color:#7C7663;">Only the question is shared. Never your answer.</p>
+            <x-import component-from-global-scope="DailyFewDesignSystem_494612.Button" variant="primary" fullWidth="{{ true }}" onClick="{{ sendShare }}" hint-size="100%,44px">Send by text</x-import>
+            <x-import component-from-global-scope="DailyFewDesignSystem_494612.Button" variant="secondary" fullWidth="{{ true }}" onClick="{{ previewShare }}" hint-size="100%,44px">Preview what they'll see</x-import>
+          </sc-if>
+
+          <sc-if value="{{ d.detail }}" hint-placeholder-val="{{ false }}">
+            <span style="font:500 10.5px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:#8A365A;">{{ detail.dateLong }} · {{ detail.deck }}</span>
+            <h3 style="margin:0;font:300 28px/1.14 var(--font-display);color:#4C1C31;">{{ detail.q }}</h3>
+            <sc-if value="{{ detail.text }}" hint-placeholder-val="{{ false }}"><p style="margin:0;font:400 16px/1.6 var(--font-sans);">{{ detail.text }}</p></sc-if>
+            <sc-if value="{{ detail.reflected }}" hint-placeholder-val="{{ false }}"><p style="margin:0;font:400 15px/1.6 var(--font-sans);color:#7C7663;">Marked as reflected. Nothing written down.</p></sc-if>
+            <sc-if value="{{ detail.voiceLabel }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;gap:12px;align-items:center;padding:10px 16px 10px 10px;border-radius:999px;background:#F4F0DC;"><span style="width:36px;height:36px;border-radius:50%;background:#4C1C31;color:#FEFCF2;display:flex;align-items:center;justify-content:center;"><x-import component-from-global-scope="DailyFewDesignSystem_494612.Icon" name="play" size="{{ 16 }}" hint-size="16px,16px"></x-import></span><span style="font:400 13px/1 var(--font-mono);color:#4C1C31;">{{ detail.voiceLabel }}</span></div>
+            </sc-if>
+            <sc-if value="{{ detail.hasPhotos }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;gap:8px;"><sc-for list="{{ detail.photos }}" as="ph" hint-placeholder-count="1"><div style="width:84px;height:84px;border-radius:16px;background:#F4F0DC;display:flex;align-items:center;justify-content:center;font:400 10px/1 var(--font-mono);color:#7C7663;">{{ ph }}</div></sc-for></div>
+            </sc-if>
+            <div style="display:flex;gap:10px;padding-top:4px;">
+              <div style="flex:1;"><x-import component-from-global-scope="DailyFewDesignSystem_494612.Button" variant="primary" fullWidth="{{ true }}" onClick="{{ editDetail }}" hint-size="100%,44px">Edit</x-import></div>
+              <div style="flex:1;"><x-import component-from-global-scope="DailyFewDesignSystem_494612.Button" variant="secondary" fullWidth="{{ true }}" onClick="{{ askDelAnswer }}" hint-size="100%,44px">Delete</x-import></div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ d.delAnswer }}" hint-placeholder-val="{{ false }}">
+            <h3 style="margin:0;font:300 30px/1.1 var(--font-display);color:#4C1C31;">Delete this answer?</h3>
+            <p style="margin:0;font:400 15px/1.6 var(--font-sans);">It's removed from your history and recap. This can't be undone.</p>
+            <x-import component-from-global-scope="DailyFewDesignSystem_494612.Button" variant="primary" fullWidth="{{ true }}" onClick="{{ closeDialog }}" hint-size="100%,44px">Keep it</x-import>
+            <x-import component-from-global-scope="DailyFewDesignSystem_494612.Button" variant="secondary" fullWidth="{{ true }}" onClick="{{ delAnswer }}" hint-size="100%,44px">Delete</x-import>
+          </sc-if>
+
+          <sc-if value="{{ d.note }}" hint-placeholder-val="{{ false }}">
+            <span style="font:500 10.5px/1.2 var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:#8A365A;">September 2026</span>
+            <h3 style="margin:0;font:300 30px/1.1 var(--font-display);color:#4C1C31;">This month's note</h3>
+            <textarea value="{{ noteDraft }}" onChange="{{ setNote }}" style="min-height:120px;resize:none;border:1px solid #E7E1C6;border-radius:8px;padding:12px 14px;background:#fff;color:#332F28;font:400 15px/1.55 var(--font-sans);outline:none;" style-focus="border-color:#8A365A;box-shadow:0 0 0 3px rgba(138,54,90,.28)"></textarea>
+            <span style="font:400 12px/1.4 var(--font-sans);color:#7C7663;">Big moments, small ones, anything you want to remember from September.</span>
+            <x-import component-from-global-scope="DailyFewDesignSystem_494612.Button" variant="primary" fullWidth="{{ true }}" onClick="{{ saveNote }}" hint-size="100%,44px">Save note</x-import>
+          </sc-if>
+
+          <sc-if value="{{ d.switchCat }}" hint-placeholder-val="{{ false }}">
+            <h3 style="margin:0;font:300 30px/1.1 var(--font-display);color:#4C1C31;">Switch category</h3>
+            <div style="display:flex;flex-direction:column;">
+              <sc-for list="{{ deckCats }}" as="c" hint-placeholder-count="6">
+                <button onClick="{{ c.open }}" style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;background:none;border:0;border-bottom:1px solid #E7E1C6;color:#4C1C31;font:400 20px/1.1 var(--font-display);cursor:pointer;text-align:left;">{{ c.name }}<span style="font:400 11px/1 var(--font-mono);color:#7C7663;">{{ c.prog }}</span></button>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ d.delAccount }}" hint-placeholder-val="{{ false }}">
+            <h3 style="margin:0;font:300 30px/1.1 var(--font-display);color:#4C1C31;">Delete your account?</h3>
+            <p style="margin:0;font:400 15px/1.6 var(--font-sans);">This permanently deletes your profile, answers, voice memos, photos and monthly notes. It can't be undone.</p>
+            <x-import component-from-global-scope="DailyFewDesignSystem_494612.Button" variant="primary" fullWidth="{{ true }}" onClick="{{ closeDialog }}" hint-size="100%,44px">Keep my account</x-import>
+            <button onClick="{{ delAccount }}" style="height:44px;border-radius:999px;border:1px solid #9B2C2C;background:transparent;color:#9B2C2C;font:500 12px/1 var(--font-sans);letter-spacing:.04em;text-transform:uppercase;cursor:pointer;" style-hover="background:#9B2C2C;color:#FEFCF2">Delete everything</button>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;startScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;home&quot;,&quot;signup&quot;,&quot;library&quot;,&quot;deck&quot;,&quot;draw&quot;,&quot;history&quot;,&quot;recap&quot;,&quot;profile&quot;,&quot;shared&quot;],&quot;default&quot;:&quot;home&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;showStars&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  static MON = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  static MONL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  static SEASONS = ['A new beginning','In between chapters','A hard stretch','Settling in','Starting over'];
+  static SEASON_DECK = {'A new beginning':'fp','In between chapters':'sib'};
+  static AURORA = 'radial-gradient(110% 80% at 50% 120%,rgba(209,219,255,.55),rgba(209,219,255,0) 60%),linear-gradient(160deg,#531832 0%,#8A365A 100%)';
+  static LILAC = 'radial-gradient(120% 90% at 20% 0%,rgba(209,219,255,.5),rgba(209,219,255,0) 60%),linear-gradient(160deg,#6B2743 0%,#3A1526 100%)';
+  static DECKS = [
+    {id:'sep',name:'The quiet turn',type:'Monthly',tag:'September 2026',desc:'For the month things start to shift, and you start to notice.',cats:[
+      {id:'sep-a',name:'Noticing',total:11,base:6,qs:['What did you notice today that you usually rush past?','What has changed in you since the summer started?','Which small thing made this week easier?']},
+      {id:'sep-b',name:'Letting go',total:10,base:4,qs:['What are you ready to stop explaining?','Which habit has outlived its reason?','What would you stop doing if no one kept score?']},
+      {id:'sep-c',name:'Tending',total:10,base:3,qs:['What needs more of your attention this month?','How do you want your evenings to feel this season?','Who could use a check-in from you?']}]},
+    {id:'sib',name:'Somewhere in between',type:'Life season',tag:'In between chapters',desc:'For the stretch between what ended and what starts next.',cats:[
+      {id:'sib-1',name:'Where you started',total:12,base:5,qs:['What did you believe about yourself at twelve that you have since let go of?','Which place from your childhood still shows up in your dreams?','Who first made you feel capable?']},
+      {id:'sib-2',name:'Where you are',total:14,base:4,qs:['What does an ordinary Tuesday look like for you right now?','What are you tolerating that you did not choose?','Where do you feel most like yourself lately?']},
+      {id:'sib-3',name:"What you're carrying",total:13,base:3,qs:['What are you still holding that was never yours to carry?','What would you put down if no one would notice?','Which worry has stayed the longest?']},
+      {id:'sib-4',name:"What's next",total:12,base:2,qs:['What are you quietly hoping for?','What would you try if it did not have to go well?','Who do you want to be a year from today?']},
+      {id:'sib-5',name:'Connection',total:12,base:3,qs:['Who do you wish you called more?','When did someone last really listen to you?','What do you need from the people closest to you?']},
+      {id:'sib-6',name:'Body',total:11,base:1,qs:['Where in your body do you hold stress?','What is your body asking for this week?','When did you last feel at home in your body?']}]},
+    {id:'aug',name:'Late light',type:'Monthly',tag:'August 2026',desc:'Questions for long evenings and the end of something.',cats:[
+      {id:'aug-a',name:'Looking back',total:16,base:4,qs:['What will you remember about this summer?','What surprised you about yourself lately?']},
+      {id:'aug-b',name:'Slowing down',total:15,base:2,qs:['When did you last do nothing and enjoy it?','What would a slower week look like?']}]},
+    {id:'fp',name:'First pages',type:'Life season',tag:'A new beginning',desc:'For the start of something, whether you chose it or not.',cats:[
+      {id:'fp-a',name:'Arriving',total:10,base:0,qs:['What do you want to bring with you into this?','What are you nervous to admit you want?']},
+      {id:'fp-b',name:'Building',total:10,base:0,qs:['What does a good first month look like?','Who do you want around you for this part?']}]}
+  ];
+  static IDX = (() => { const m = {}; Component.DECKS.forEach(d => d.cats.forEach(c => c.qs.forEach((t, i) => { m[c.id + '-' + i] = {id:c.id + '-' + i, text:t, deck:d.name, deckId:d.id, cat:c.name, catId:c.id}; }))); return m; })();
+  static SEED = [
+    ['sib-3-0','2026-09-24',"My sister's expectations about how I should handle Dad. I keep trying to fix it for everyone.",0,0,false],
+    ['sep-a-0','2026-09-22','',102,0,false],
+    ['sib-5-1','2026-09-19','',0,0,true],
+    ['sib-2-1','2026-09-15','Being on call every weekend. I said yes because it felt temporary. It has been four months.',0,1,false],
+    ['sep-c-0','2026-09-09','Sleep. And the garden before the first frost.',0,2,false],
+    ['sep-b-0','2026-09-03',"Why I left. I don't owe anyone the long version.",0,0,false],
+    ['sib-3-0','2026-08-27',"The move. Every box I haven't unpacked yet.",48,0,false],
+    ['aug-a-0','2026-08-20','',64,0,false],
+    ['sib-4-0','2026-08-11','A slower morning. Coffee on the porch before anyone needs me.',0,1,false],
+    ['aug-b-1','2026-08-04','',0,0,true]
+  ].map((r, i) => { const q = Component.IDX[r[0]]; return {id:i + 1, qid:r[0], q:q.text, deck:q.deck, cat:q.cat, date:r[1], text:r[2], voice:r[3], photos:r[4], reflected:r[5]}; });
+
+  state = {
+    screen: this.props.startScreen ?? 'home',
+    deckId:'sib', qid:'sib-3-0', fade:1, lift:0, saved:null, drawFrom:'deck',
+    answers: Component.SEED.slice(), nextId: 100,
+    compose:null, dialog:null, toast:null, detailId:null,
+    histTab:'month', libTab:'All',
+    name:'Rossi', email:'rossi@dailyfew.com', season:'In between chapters',
+    reminder:true, remTime:'8:00 PM', cEmail:true, cText:false,
+    f:{name:'',email:'',bday:'',phone:'',season:'',cEmail:false,cText:false}, errs:{}, blocked:false, fromShare:false,
+    note:{text:'Started the new job. Mom visited for the weekend. First cold morning on the 21st.', photos:1}, noteDraft:'',
+    sharedQid:'sep-b-0'
+  };
+
+  componentWillUnmount(){ clearInterval(this.rec); clearTimeout(this.tt); }
+  componentDidUpdate(pp){ if (pp.startScreen !== this.props.startScreen && this.props.startScreen) this.go(this.props.startScreen); }
+
+  go = (screen, extra = {}) => { if (this.state.compose && this.state.compose.recording) this.stopRec(); this.setState({screen, dialog:null, ...extra}); };
+  toast = (t) => { clearTimeout(this.tt); this.setState({toast:t}); this.tt = setTimeout(() => this.setState({toast:null}), 2200); };
+  fmtD = (d) => { const [, m, dd] = d.split('-'); return {mon:Component.MON[m - 1], day:String(+dd), short:Component.MON[m - 1] + ' ' + (+dd), long:Component.MONL[m - 1] + ' ' + (+dd)}; };
+  answeredIds = () => new Set(this.state.answers.map(a => a.qid));
+
+  pickCard = (catId, deckId) => {
+    const deck = Component.DECKS.find(d => d.id === deckId); const cat = deck.cats.find(c => c.id === catId);
+    const ids = cat.qs.map((_, i) => catId + '-' + i); const done = this.answeredIds();
+    let pool = ids.filter(id => !done.has(id)); if (!pool.length) pool = ids;
+    if (pool.length > 1) pool = pool.filter(id => id !== this.state.qid);
+    const qid = pool[Math.floor(Math.random() * pool.length)];
+    this.setState({fade:0, lift:14});
+    setTimeout(() => this.setState({qid, deckId, fade:1, lift:0, saved:null}), 180);
+  };
+
+  openCompose = (qid, from) => { const q = Component.IDX[qid]; this.go('compose', {compose:{qid, q:q.text, deck:q.deck, cat:q.cat, text:'', secs:0, recording:false, photos:0, from, editId:null}}); };
+  setC = (patch) => this.setState(s => ({compose:{...s.compose, ...patch}}));
+  stopRec = () => { clearInterval(this.rec); this.rec = null; this.setState(s => s.compose ? {compose:{...s.compose, recording:false}} : null); };
+  toggleRec = () => {
+    const c = this.state.compose; if (c.recording) return this.stopRec();
+    this.setC({recording:true});
+    this.rec = setInterval(() => { const cs = this.state.compose; if (!cs) return clearInterval(this.rec); if (cs.secs + 1 >= 300) { this.setC({secs:300}); this.stopRec(); this.toast('Five minutes. Recording saved.'); } else this.setC({secs:cs.secs + 1}); }, 1000);
+  };
+  hasContent = (c) => c && (c.text.trim() || c.secs > 0 || c.photos > 0);
+  addAnswer = (qid, fields) => { const q = Component.IDX[qid]; this.setState(s => ({nextId:s.nextId + 1, answers:[{id:s.nextId, qid, q:q.text, deck:q.deck, cat:q.cat, date:'2026-09-26', text:'', voice:0, photos:0, reflected:false, ...fields}, ...s.answers]})); };
+  saveAnswer = () => {
+    const c = this.state.compose; if (!this.hasContent(c)) return; this.stopRec();
+    if (c.editId) { this.setState(s => ({answers:s.answers.map(a => a.id === c.editId ? {...a, text:c.text, voice:c.secs, photos:c.photos, reflected:false} : a)})); this.go('history', {compose:null}); return this.toast('Answer updated.'); }
+    this.addAnswer(c.qid, {text:c.text, voice:c.secs, photos:c.photos});
+    if (c.from === 'home') { this.go('home', {compose:null}); this.toast('Saved to September.'); }
+    else this.go('draw', {compose:null, saved:'Saved to September.'});
+  };
+
+  renderVals() {
+    const st = this.state, C = Component, sc = st.screen;
+    const s = {}; ['signup','home','library','deck','draw','compose','history','recap','profile','shared'].forEach(k => s[k] = sc === k);
+    const done = this.answeredIds();
+    const cream = '#FEFCF2', ink = '#4C1C31';
+    const pill = (on) => ({bg: on ? cream : 'transparent', fg: on ? ink : 'rgba(254,252,242,.72)'});
+    const chip = (on) => ({bg: on ? '#D1DBFF' : 'transparent', fg: on ? ink : 'rgba(254,252,242,.86)', border: on ? '#D1DBFF' : 'rgba(254,252,242,.24)'});
+    const preview = (a) => a.reflected ? 'Marked as reflected' : (a.text || (a.voice ? 'Voice memo · ' + Math.floor(a.voice / 60) + ':' + String(a.voice % 60).padStart(2, '0') : (a.photos + ' photo' + (a.photos > 1 ? 's' : ''))));
+    const fmts = (a) => [a.text && 'pen-line', a.voice && 'mic', a.photos && 'image', a.reflected && 'check'].filter(Boolean);
+    const openDetail = (id) => () => this.setState({dialog:'detail', detailId:id});
+
+    const deckTile = (d, eyebrow) => ({...d, eyebrow, art: d.type === 'Monthly' ? C.AURORA : C.LILAC,
+      meta: d.type.toUpperCase() + ' · ' + d.cats.reduce((n, c) => n + c.total, 0) + ' cards',
+      open: () => this.go('deck', {deckId:d.id})});
+
+    // home
+    const sepDays = new Set([1,2,5,7,8,11,12,14,16,17,20,23,25]);
+    st.answers.forEach(a => { if (a.date.startsWith('2026-09')) sepDays.add(+a.date.slice(8)); });
+    const ring = Array.from({length:30}, (_, i) => {
+      const day = i + 1, ang = -Math.PI / 2 + (i / 30) * Math.PI * 2, today = day === 26, fut = day > 26, on = sepDays.has(day);
+      const sz = today ? 16 : 9, R = 128;
+      return {x: 143 + R * Math.cos(ang) - sz / 2, y: 143 + R * Math.sin(ang) - sz / 2, s: sz,
+        bg: on ? '#D1DBFF' : (fut ? 'transparent' : 'rgba(254,252,242,.16)'),
+        bd: today ? '#FEFCF2' : (fut ? 'rgba(254,252,242,.28)' : 'transparent'),
+        glow: today ? '0 0 0 4px rgba(209,219,255,.18),0 0 18px rgba(209,219,255,.6)' : 'none'};
+    });
+    const cotd = C.IDX['sep-b-0'];
+    const cotdToday = st.answers.find(a => a.qid === 'sep-b-0' && a.date === '2026-09-26');
+    const recId = C.SEASON_DECK[st.season];
+    const homeDecks = [deckTile(C.DECKS[0], "This month's deck")];
+    if (recId) homeDecks.push(deckTile(C.DECKS.find(d => d.id === recId), 'For your season · ' + st.season));
+
+    // library
+    const libDecks = C.DECKS.filter(d => st.libTab === 'All' || (st.libTab === 'Monthly' ? d.type === 'Monthly' : d.type === 'Life season')).map(d => ({
+      ...deckTile(d), artH: d.id === 'sep' ? 170 : 120,
+      badge: d.id === 'sep' ? 'This month' : (d.id === recId ? 'For your season' : ''),
+      meta: (d.type === 'Monthly' ? d.tag : 'Life season · ' + d.tag).toUpperCase() + ' · ' + d.cats.reduce((n, c) => n + c.total, 0) + ' cards'}));
+
+    // deck
+    const deckD = C.DECKS.find(d => d.id === st.deckId);
+    const deck = {...deckD, art: deckD.type === 'Monthly' ? C.AURORA : C.LILAC, meta: deckD.cats.reduce((n, c) => n + c.total, 0) + ' cards · ' + deckD.cats.length + ' categories'};
+    const deckCats = deckD.cats.map(c => { const n = Math.min(c.total, c.base + c.qs.filter((_, i) => done.has(c.id + '-' + i)).length);
+      return {name:c.name, prog:n + ' of ' + c.total, pct: Math.round(n / c.total * 100), open: () => { this.go('draw', {drawFrom:'deck'}); this.pickCard(c.id, deckD.id); }}; });
+
+    // draw
+    const card = C.IDX[st.qid] || cotd;
+    const past = st.answers.filter(a => a.qid === card.id).map(a => ({date:this.fmtD(a.date).short, preview:preview(a), open:openDetail(a.id)}));
+
+    // compose
+    const c = st.compose || {q:'', deck:'', cat:'', text:'', secs:0, photos:0, recording:false};
+    const mmss = (x) => Math.floor(x / 60) + ':' + String(x % 60).padStart(2, '0');
+    const H = [8,14,22,12,26,18,10,20,28,16,9,24,14,30,18,12,22,8,16,26,12,20,10,18,24,14];
+    const filled = c.recording ? (c.secs % 26) + 1 : (c.secs ? 26 : 0);
+    const bars = H.map((h, i) => ({h: c.secs || c.recording ? h : 4, c: i < filled ? '#D1DBFF' : 'rgba(254,252,242,.24)'}));
+    const photoSlots = [0,1,2].map(i => i < c.photos
+      ? {icon:'x', label:'Photo ' + (i + 1), bg:'rgba(209,219,255,.16)', border:'rgba(209,219,255,.3)', fn: () => this.setC({photos:c.photos - 1})}
+      : {icon: i === c.photos ? 'plus' : 'image', label: i === c.photos ? 'Add' : '', bg:'transparent', border:'rgba(254,252,242,.16)', fn: () => c.photos < 3 && this.setC({photos:c.photos + 1})});
+
+    // history
+    const sorted = [...st.answers].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+    const item = (a) => { const f = this.fmtD(a.date); return {mon:f.mon, day:f.day, q:a.q, preview:preview(a), fmts:fmts(a), open:openDetail(a.id)}; };
+    const months = ['2026-09','2026-08'].map(k => { const items = sorted.filter(a => a.date.startsWith(k)); const m = C.MONL[+k.slice(5) - 1];
+      return {label: m + ' 2026', short:m, current: k === '2026-09', past: k !== '2026-09', count: items.length + ' answered', items: items.map(item)}; });
+    const groups = {}; sorted.forEach(a => { (groups[a.qid] = groups[a.qid] || []).push(a); });
+    const cardGroups = Object.values(groups).map(g => ({q:g[0].q, meta: g.length + (g.length > 1 ? ' answers' : ' answer') + ' · last ' + this.fmtD(g[0].date).short,
+      open: () => this.go('draw', {qid:g[0].qid, deckId:C.IDX[g[0].qid].deckId, saved:null, drawFrom:'history'})}));
+
+    const aug = sorted.filter(a => a.date.startsWith('2026-08'));
+    const recap = {count: aug.length, decks: new Set(aug.map(a => a.deck)).size, items: aug.map(item)};
+
+    const det = st.answers.find(a => a.id === st.detailId);
+    const detail = det ? {q:det.q, deck:det.deck, dateLong:this.fmtD(det.date).long, text:det.text, reflected:det.reflected,
+      voiceLabel: det.voice ? 'Voice memo · ' + mmss(det.voice) : '', hasPhotos: det.photos > 0, photos: Array.from({length:det.photos}, (_, i) => 'Photo ' + (i + 1))} : {};
+
+    const fset = (k) => (e) => this.setState({f:{...st.f, [k]:e.target.value}});
+    const fields = [['name','Name','text','First and last'],['email','Email','email','you@example.com'],['bday','Birthday','date',''],['phone','Phone','tel','(555) 555-0123']]
+      .map(([k, label, type, ph]) => ({label, type, ph, value:st.f[k], onChange:fset(k), err:st.errs[k] || '', border: st.errs[k] ? '#F2B8C6' : 'rgba(254,252,242,.18)'}));
+
+    const stars = this._stars || (this._stars = Array.from({length:46}, (_, i) => { const r = (n) => { const x = Math.sin(i * 12.9898 + n * 78.233) * 43758.5453; return x - Math.floor(x); }; return {x:(r(1) * 100).toFixed(1), y:(r(2) * 100).toFixed(1), s: r(3) > .85 ? 2 : 1, o:(.18 + r(4) * .5).toFixed(2)}; }));
+
+    const navDefs = [['home','Home','moon'],['library','Library','layers'],['draw','Pull a card','plus'],['history','History','book-open'],['profile','Profile','user-round']];
+    const activeTab = s.deck ? 'library' : (s.recap ? 'history' : sc);
+    const nav = navDefs.map(([k, label, icon]) => k === 'draw'
+      ? {label, icon, w:54, bg:cream, fg:ink, go: () => { this.go('draw', {drawFrom:'deck'}); this.pickCard(C.IDX[st.qid].catId, C.IDX[st.qid].deckId); }}
+      : {label, icon, w:46, bg: activeTab === k ? 'rgba(209,219,255,.16)' : 'transparent', fg: activeTab === k ? '#D1DBFF' : 'rgba(254,252,242,.6)', go: () => this.go(k)});
+
+    const flowDefs = [['A','Sign up and 18+ gate','signup'],['','Home and card of the day','home'],['B','Library, deck, category','library'],['','Draw a card','draw'],['','Answer: text, voice, photos','compose'],['D','Shared link, visitor view','shared'],['E','History by month or card','history'],['','Monthly recap','recap'],['F','Profile and account','profile']];
+    const flows = flowDefs.map(([k, label, scr]) => ({k, label, bg: sc === scr ? 'rgba(76,28,49,.08)' : 'transparent', go: () => {
+      if (scr === 'compose') return this.openCompose(st.qid, 'draw');
+      if (scr === 'signup') return this.go('signup', {blocked:false, errs:{}, fromShare:false});
+      this.go(scr, {saved:null});
+    }}));
+
+    return {
+      s, flows, stars, showStars: (this.props.showStars ?? true) && !s.shared,
+      phoneBg: s.shared ? '#FEFCF2' : '#280E1A', statusColor: s.shared ? '#1C1A16' : '#FEFCF2',
+      showNav: !(s.signup || s.compose || s.shared || s.recap), nav,
+      go: {home: () => this.go('home'), library: () => this.go('library'), history: () => this.go('history'), recap: () => this.go('recap')},
+      name: st.name, email: st.email, initial: st.name[0],
+      // signup
+      fields, errs: st.errs, blocked: st.blocked, notBlocked: !st.blocked, fromShare: st.fromShare,
+      signupSeasons: C.SEASONS.map(n => ({name:n, ...chip(st.f.season === n), pick: () => this.setState({f:{...st.f, season:n}})})),
+      consents: [['cEmail','Email me about new decks and updates'],['cText','Text me about new decks and updates']].map(([k, label]) => ({label, on:st.f[k],
+        bg: st.f[k] ? '#D1DBFF' : 'transparent', border: st.f[k] ? '#D1DBFF' : 'rgba(254,252,242,.4)', toggle: () => this.setState({f:{...st.f, [k]:!st.f[k]}})})),
+      resetSignup: () => this.setState({blocked:false, f:{...st.f, bday:''}}),
+      submitSignup: () => {
+        const f = st.f, e = {};
+        if (!f.name.trim()) e.name = 'Add your name.';
+        if (!/@/.test(f.email)) e.email = 'That email is missing an @.';
+        if (!f.bday) e.bday = 'Add your birthday.';
+        if (f.phone.replace(/\D/g, '').length < 10) e.phone = 'Add a 10-digit phone number.';
+        if (!f.season) e.season = 'Pick the one that fits best right now.';
+        if (Object.keys(e).length) return this.setState({errs:e});
+        const b = new Date(f.bday + 'T00:00'); let age = 2026 - b.getFullYear(); if (b.getMonth() > 8 || (b.getMonth() === 8 && b.getDate() > 26)) age--;
+        if (age < 18) return this.setState({blocked:true, errs:{}});
+        const patch = {name:f.name.trim().split(' ')[0], email:f.email, season:f.season, cEmail:f.cEmail, cText:f.cText, errs:{}};
+        if (st.fromShare) this.go('draw', {...patch, qid:st.sharedQid, deckId:C.IDX[st.sharedQid].deckId, saved:null, fromShare:false, drawFrom:'home'});
+        else this.go('home', patch);
+        this.toast('Welcome, ' + patch.name + '.');
+      },
+      // home
+      ring, cotd, cotdDone: !!cotdToday, cotdOpen: !cotdToday, cotdDoneLabel: cotdToday && cotdToday.reflected ? 'Reflected today' : 'Answered today', homeDecks,
+      answerCotd: () => this.openCompose('sep-b-0', 'home'),
+      reflectCotd: () => { this.addAnswer('sep-b-0', {reflected:true}); this.toast('Marked as reflected.'); },
+      shareCotd: () => this.setState({dialog:'share', sharedQid:'sep-b-0'}),
+      // library / deck
+      libTabs: ['All','Monthly','Life season'].map(t => ({label:t, ...pill(st.libTab === t), pick: () => this.setState({libTab:t})})),
+      libDecks, deck, deckCats,
+      // draw
+      card, fade: st.fade, lift: st.lift, past, hasPast: past.length > 0,
+      pastLabel: "You've answered this " + (past.length === 1 ? 'once' : past.length + ' times'),
+      savedPanel: !!st.saved, drawActions: !st.saved, savedLabel: st.saved,
+      drawBtns: [
+        {label:'Skip', icon:'rotate-cw', fn: () => this.pickCard(card.catId, card.deckId)},
+        {label:'Reflected', icon:'check', fn: () => { this.addAnswer(card.id, {reflected:true}); this.setState({saved:'Marked as reflected.'}); }},
+        {label:'Share', icon:'send', fn: () => this.setState({dialog:'share', sharedQid:card.id})}],
+      answerCard: () => this.openCompose(card.id, 'draw'),
+      drawNext: () => this.pickCard(card.catId, card.deckId),
+      openSwitch: () => this.setState({dialog:'switchCat', deckId:card.deckId}),
+      backFromDraw: () => this.go(st.drawFrom === 'history' ? 'history' : (st.drawFrom === 'home' ? 'home' : 'deck'), {deckId:card.deckId, saved:null}),
+      // compose
+      compose: c, composeTitle: c.editId ? 'Edit answer' : 'New answer',
+      setText: (e) => this.setC({text:e.target.value}),
+      toggleRec: this.toggleRec, bars, recTime: mmss(c.secs) + ' / 5:00',
+      recBg: c.recording ? '#8A365A' : cream, recFg: c.recording ? cream : ink, recIcon: c.recording ? 'square' : 'mic',
+      voiceBorder: c.recording ? '#D1DBFF' : 'rgba(254,252,242,.16)',
+      canDelVoice: c.secs > 0 && !c.recording, delVoice: () => this.setC({secs:0}),
+      photoSlots, photoLabel: 'Photos · ' + c.photos + ' of 3',
+      saveDisabled: !this.hasContent(c), saveAnswer: this.saveAnswer,
+      closeCompose: () => { if (this.hasContent(c) && !c.editId) { this.stopRec(); this.setState({dialog:'discard'}); } else this.go(c.editId ? 'history' : c.from, {compose:null}); },
+      discard: () => this.go(c.from || 'draw', {compose:null}),
+      // history
+      histTabs: [['month','By month'],['card','By card']].map(([k, label]) => ({label, ...pill(st.histTab === k), pick: () => this.setState({histTab:k})})),
+      byMonth: st.histTab === 'month', byCard: st.histTab === 'card', months, cardGroups,
+      note: st.note, notePhotos: st.note.photos + ' photo · tap to edit',
+      openNote: () => this.setState({dialog:'note', noteDraft:st.note.text}),
+      setNote: (e) => this.setState({noteDraft:e.target.value}),
+      saveNote: () => { this.setState({note:{...st.note, text:st.noteDraft}, dialog:null}); this.toast('Note saved.'); },
+      recap,
+      // detail
+      detail,
+      editDetail: () => this.go('compose', {compose:{qid:det.qid, q:det.q, deck:det.deck, cat:det.cat, text:det.text || '', secs:det.voice, photos:det.photos, recording:false, from:'history', editId:det.id}}),
+      askDelAnswer: () => this.setState({dialog:'delAnswer'}),
+      delAnswer: () => { this.setState({answers:st.answers.filter(a => a.id !== st.detailId), dialog:null, detailId:null}); this.toast('Answer deleted.'); },
+      // profile
+      profSeasons: C.SEASONS.map(n => ({name:n, ...chip(st.season === n), pick: () => { this.setState({season:n}); this.toast(C.SEASON_DECK[n] ? 'Home now recommends ' + C.DECKS.find(d => d.id === C.SEASON_DECK[n]).name + '.' : 'Season updated.'); }})),
+      switches: [['reminder','Daily reminder',"A push at your chosen time that opens today's card."],['cEmail','Email updates','New decks and product news.'],['cText','Text updates','New decks and product news.']].map(([k, label, desc]) => ({label, desc,
+        track: st[k] ? '#D1DBFF' : 'rgba(254,252,242,.18)', knob: st[k] ? ink : cream, x: st[k] ? 18 : 0, times: k === 'reminder' && st.reminder, toggle: () => this.setState({[k]:!st[k]})})),
+      remTimes: ['7:30 AM','12:30 PM','8:00 PM','9:30 PM'].map(t => ({label:t, ...chip(st.remTime === t), pick: () => this.setState({remTime:t})})),
+      signOut: () => this.go('signup', {blocked:false, errs:{}}),
+      askDelAccount: () => this.setState({dialog:'delAccount'}),
+      delAccount: () => { this.go('signup', {answers:[], blocked:false, errs:{}, f:{name:'',email:'',bday:'',phone:'',season:'',cEmail:false,cText:false}}); this.toast('Account deleted.'); },
+      // share
+      sharedQ: C.IDX[st.sharedQid], shareQ: C.IDX[st.sharedQid].text,
+      sendShare: () => { this.setState({dialog:null}); this.toast('Card sent.'); },
+      previewShare: () => this.go('shared'),
+      sharedSignup: () => this.go('signup', {fromShare:true, blocked:false, errs:{}}),
+      sharedOpenApp: () => this.go('draw', {qid:st.sharedQid, deckId:C.IDX[st.sharedQid].deckId, saved:null, drawFrom:'home'}),
+      // dialogs
+      dialog: !!st.dialog, d: {[st.dialog || 'none']: true}, closeDialog: () => this.setState({dialog:null}),
+      toast: st.toast
+    };
+  }
+}
+</script>
+</body>
+</html>

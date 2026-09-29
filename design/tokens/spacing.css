@@ -1,0 +1,30 @@
+:root{
+  /* 4px base grid. Section rhythm is deliberately generous — the brand reads as editorial. */
+  --space-0:0;
+  --space-1:4px;
+  --space-2:8px;
+  --space-3:12px;
+  --space-4:16px;
+  --space-5:20px;
+  --space-6:24px;
+  --space-8:32px;
+  --space-10:40px;
+  --space-12:48px;
+  --space-16:64px;
+  --space-20:80px;
+  --space-24:96px;
+  --space-32:128px;
+  --space-40:160px;
+
+  /* Semantic */
+  --gutter-page:24px;
+  --gutter-page-lg:64px;
+  --section-y:96px;
+  --section-y-lg:128px;
+  --stack-tight:8px;
+  --stack:16px;
+  --stack-loose:24px;
+  --content-max:1200px;
+  --prose-max:64ch;
+  --measure-narrow:44ch;
+}

@@ -1,0 +1,85 @@
+:root{
+  /* ---- Brand palette (source: Daily Few Color Palette WIP.png) ---- */
+  --df-burgundy:#4C1C31;
+  --df-cream:#F4F0DC;
+  --df-lilac:#D1DBFF;
+  --df-pale-cream:#FEFCF2;
+  --df-gradient-start:#531832;
+  --df-gradient-end:#8A365A;
+
+  /* ---- Burgundy ramp (derived from --df-burgundy in oklch; #4C1C31 is 700) ---- */
+  --burgundy-50:#F7EFF2;
+  --burgundy-100:#EEDCE3;
+  --burgundy-200:#DCB9C7;
+  --burgundy-300:#C491A6;
+  --burgundy-400:#A8637F;
+  --burgundy-500:#8A365A;
+  --burgundy-600:#6B2743;
+  --burgundy-700:#4C1C31;
+  --burgundy-800:#3A1526;
+  --burgundy-900:#280E1A;
+
+  /* ---- Cream / neutral ramp (warm, never grey) ---- */
+  --cream-50:#FEFCF2;
+  --cream-100:#FAF7E9;
+  --cream-200:#F4F0DC;
+  --cream-300:#E7E1C6;
+  --cream-400:#CFC8AC;
+  --cream-500:#A9A288;
+  --cream-600:#7C7663;
+  --cream-700:#544F42;
+  --cream-800:#332F28;
+  --cream-900:#1C1A16;
+
+  /* ---- Lilac ramp (accent only — never a primary action) ---- */
+  --lilac-50:#F5F7FF;
+  --lilac-100:#E8EDFF;
+  --lilac-200:#D1DBFF;
+  --lilac-300:#B2C1F5;
+  --lilac-400:#8C9FDD;
+  --lilac-500:#6678BC;
+
+  /* ---- Semantic colour aliases ---- */
+  --surface-page:var(--df-pale-cream);
+  --surface-raised:#FFFFFF;
+  --surface-sunken:var(--cream-200);
+  --surface-card:#FFFFFF;
+  --surface-inverse:var(--df-burgundy);
+  --surface-accent:var(--lilac-200);
+  --surface-hover:var(--cream-100);
+
+  --text-body:var(--cream-800);
+  --text-heading:var(--df-burgundy);
+  --text-muted:var(--cream-600);
+  --text-inverse:var(--df-pale-cream);
+  --text-inverse-muted:rgba(254 252 242 / .72);
+  --text-link:var(--df-burgundy);
+  --text-link-hover:var(--burgundy-500);
+
+  --border-hairline:var(--cream-300);
+  --border-strong:var(--df-burgundy);
+  --border-inverse:rgba(254 252 242 / .28);
+  --border-focus:var(--burgundy-500);
+
+  --action-primary-bg:var(--df-burgundy);
+  --action-primary-bg-hover:var(--burgundy-600);
+  --action-primary-bg-active:var(--burgundy-800);
+  --action-primary-fg:var(--df-pale-cream);
+  --action-secondary-fg:var(--df-burgundy);
+  --action-disabled-bg:var(--cream-300);
+  --action-disabled-fg:var(--cream-500);
+
+  /* ---- Status ---- */
+  --status-success:#4F6B4A;
+  --status-success-surface:#EDF2EA;
+  --status-info:var(--lilac-500);
+  --status-info-surface:var(--lilac-100);
+  --status-warning:#8A6524;
+  --status-warning-surface:#F8F0DE;
+  --status-error:#9B2C2C;
+  --status-error-surface:#F9EBEA;
+
+  /* ---- Brand gradient (deep burgundy → plum). One direction only: 160deg. ---- */
+  --gradient-brand:linear-gradient(160deg,var(--df-gradient-start) 0%,var(--df-gradient-end) 100%);
+  --gradient-protect:linear-gradient(to top,rgba(40 14 26 / .78) 0%,rgba(40 14 26 / 0) 72%); /* @kind color */
+}

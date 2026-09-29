@@ -1,0 +1,53 @@
+:root{
+  /* ---- Families ---- */
+  --font-display:"Cormorant Garamond",Cormorant,"Times New Roman",serif;
+  --font-sans:"Jost","Helvetica Neue",Helvetica,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+
+  /* ---- Scale (1.25 major third, 16px base) ---- */
+  --text-2xs:11px;
+  --text-xs:12px;
+  --text-sm:14px;
+  --text-base:16px;
+  --text-md:18px;
+  --text-lg:21px;
+  --text-xl:26px;
+  --text-2xl:33px;
+  --text-3xl:42px;
+  --text-4xl:54px;
+  --text-5xl:68px;
+  --text-6xl:88px;
+
+  /* ---- Weights ---- */
+  --weight-light:300;
+  --weight-regular:400;
+  --weight-medium:500;
+  --weight-semibold:600;
+
+  /* ---- Line heights ---- */
+  --leading-tight:1.04;
+  --leading-display:1.12;
+  --leading-snug:1.32;
+  --leading-body:1.6;
+  --leading-loose:1.75;
+
+  /* ---- Tracking. Display serif tightens; caps eyebrows open way up. ---- */
+  --tracking-display:-0.02em;
+  --tracking-tight:-0.01em;
+  --tracking-normal:0;
+  --tracking-wide:0.04em;
+  --tracking-eyebrow:0.18em;
+  --tracking-mono:0.02em;
+
+  /* ---- Semantic roles ---- */
+  --type-display:var(--weight-light) var(--text-5xl)/var(--leading-tight) var(--font-display);
+  --type-h1:var(--weight-light) var(--text-4xl)/var(--leading-display) var(--font-display);
+  --type-h2:var(--weight-light) var(--text-3xl)/var(--leading-display) var(--font-display);
+  --type-h3:var(--weight-regular) var(--text-xl)/var(--leading-snug) var(--font-display);
+  --type-body-lg:var(--weight-light) var(--text-md)/var(--leading-body) var(--font-sans);
+  --type-body:var(--weight-regular) var(--text-base)/var(--leading-body) var(--font-sans);
+  --type-body-sm:var(--weight-regular) var(--text-sm)/var(--leading-body) var(--font-sans);
+  --type-eyebrow:var(--weight-medium) var(--text-xs)/1.2 var(--font-sans);
+  --type-button:var(--weight-medium) var(--text-sm)/1 var(--font-sans);
+  --type-data:var(--weight-regular) var(--text-sm)/1.4 var(--font-mono);
+}

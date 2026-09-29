@@ -1,0 +1,67 @@
+{
+  "expo": {
+    "name": "Daily Few",
+    "slug": "dailyfewapp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "dailyfew",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#280E1A",
+    "ios": {
+      "bundleIdentifier": "com.onyxroots.dailyfew",
+      "supportsTablet": false,
+      "config": {
+        "usesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.onyxroots.dailyfew",
+      "adaptiveIcon": {
+        "backgroundColor": "#280E1A",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#280E1A",
+          "image": "./assets/images/brand/submark-white.png",
+          "imageWidth": 96
+        }
+      ],
+      "expo-sqlite",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Daily Few lets you add photos to your answers and moments. Only you can see them.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ],
+      "@react-native-community/datetimepicker",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Daily Few uses the microphone only when you record a voice memo for an answer. Only you can hear it.",
+          "enableBackgroundRecording": false,
+          "enableBackgroundPlayback": false
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "d6d072c0-9aa0-4c25-8d5f-760b64f7b187"
+      }
+    }
+  }
+}
