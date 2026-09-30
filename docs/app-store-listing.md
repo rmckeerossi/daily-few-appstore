@@ -24,10 +24,16 @@ HOW IT WORKS
 • Look back by month or by card, and see how your answer to the same question changes over time.
 
 DECKS FOR WHERE YOU ARE
-• Somewhere in Between: 74 questions on where you started, what you’re carrying and what’s next.
-• A new monthly deck, starting with Let It Fall.
+• Somewhere in Between: questions for looking back, where you are right now and moving forward.
+• A new deck every month, with a section on your body.
 • Life-season decks: Starting over, In a transition, Healing my heart, Grieving something, Running on empty, Building something, Falling in love, Becoming a mom, Figuring it out.
-• Body decks for noticing what your body has been telling you: Listening to my body, My cycle, Perimenopause and beyond, After baby, Looking for answers, Energy and rhythm. For reflection, not medical advice.
+• Body decks for noticing what your body has been telling you: Listening to my body, My cycle, Perimenopause and beyond, After baby, Looking for answers, Energy and rhythm, Stress and my body, Food, cravings and me. For reflection, not medical advice.
+
+UNDERSTAND YOUR BODY
+• A ten-second body check-in: energy, mood, sleep, stress and cravings, plus any symptoms you want to note.
+• Your monthly recap shows how you felt day by day and the patterns in your own check-ins, like how sleep shapes your mood or what changes the week before your period.
+• Two-minute reads on 11 topics, from blood sugar and cortisol to perimenopause and PMOS (formerly PCOS). Plain language, for understanding, not medical advice.
+• Your period days never leave your phone.
 
 MORE WAYS TO KEEP YOUR MONTH
 • Write about today or save a moment, no card needed.
@@ -37,7 +43,7 @@ MORE WAYS TO KEEP YOUR MONTH
 • Share a question with a friend. Only the question travels, never your answer.
 
 PRIVATE BY DESIGN
-Your answers, voice memos and photos are only visible to you. Lock the app with Face ID if you like. No ads, and nothing you write is ever sold, shared or used for marketing. Delete everything, any time, from Profile.
+Your answers, voice memos, photos and check-ins are only visible to you, and your period days stay on your phone. Lock the app with Face ID if you like. No ads, and nothing you write is ever sold, shared or used for marketing. Delete everything, any time, from Profile.
 
 Daily Few is free, for adults 18 and over.
 
@@ -67,7 +73,13 @@ Data collected, all **linked to the user**, **not used for tracking**:
 - **User content:** Photos, Audio data (voice memos), Other user content (answers, entries, notes). Purpose: App functionality.
 - **Identifiers:** User ID. Purpose: App functionality, Analytics.
 - **Usage data:** Product interaction. Purpose: Analytics.
-- **Diagnostics:** Crash data (only once Sentry is switched on). Purpose: App functionality.
+- **Health & Fitness:** Health (body check-in ratings and symptoms). Purpose: App functionality. Not used for marketing.
+- **Diagnostics:** Crash data. Purpose: App functionality.
+
+Period days are **not** declared: they're stored only on the phone and never sent to us, which Apple doesn't count as collected.
 - **Other:** Birthday is used to confirm age (declare under "Other data types" if asked).
 
 Tracking: **No.** Third-party advertising: **No.**
+
+## Notes for App Review (App Store Connect → App Review Information → Notes)
+Daily Few is a private reflection app for adults. Sign in with the demo account below (email and password; the app switches to a password field for this address). The optional body check-in is on Home; period days are stored only on the device and never sent to our servers. Short reads are general education with sources, and are not medical advice. Account deletion: Profile → Delete account.

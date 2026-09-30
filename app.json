@@ -69,7 +69,13 @@
           "faceIDPermission": "Daily Few uses Face ID to keep your reflections locked, so only you can open them."
         }
       ],
-      "@sentry/react-native"
+      [
+        "@sentry/react-native",
+        {
+          "organization": "daily-few",
+          "project": "daily-few-ios"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
