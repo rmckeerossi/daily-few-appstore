@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { KeyboardAvoidingView, ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { space } from '@/theme/tokens';
@@ -43,11 +43,18 @@ export function Screen({
 
   const body = scroll ? (
     <ScrollView
-      contentContainerStyle={[padding, contentStyle]}
+      contentContainerStyle={[padding, keyboard && styles.grow, contentStyle]}
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="interactive"
       showsVerticalScrollIndicator={false}>
-      {children}
+      {keyboard ? (
+        // A tap anywhere that isn't a field or a button puts the keyboard away.
+        <Pressable accessible={false} onPress={Keyboard.dismiss} style={[styles.grow, { gap }]}>
+          {children}
+        </Pressable>
+      ) : (
+        children
+      )}
     </ScrollView>
   ) : (
     <View style={[styles.fill, padding, contentStyle]}>{children}</View>
@@ -69,4 +76,5 @@ export function Screen({
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
+  grow: { flexGrow: 1 },
 });

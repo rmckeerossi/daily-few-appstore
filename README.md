@@ -43,13 +43,13 @@ These are counts and signup details only. None of them read what anyone wrote, r
 
 ## Updating the short reads
 
-1. Edit or add a file in `content/reads/` (one `.md` file per read; the header at the top sets its title, reading time, which decks show it as "Read first", which recap patterns link to it, and whether the clinical advisor has reviewed it).
+1. Edit or add a file in `content/reads/` (one `.md` file per read; the header at the top sets its title, topic (which shelf it sits on in the Library), reading time, which decks show it as "Read first", which recap patterns link to it, and whether the clinical advisor has reviewed it).
 2. Run `node scripts/reads/build-seed.mjs`.
 3. Paste `supabase/seed/reads.sql` into the Supabase SQL editor and run it.
 
 ## Updating the questions
 
-1. Edit `design/Daily_Few_Card_Library.xlsx` (Decks and Cards tabs).
+1. Edit `design/Daily_Few_Card_Library.xlsx` (Decks and Cards tabs). Mark "Yes" in the Cards tab's "Card of the day" column for questions anyone could answer; card of the day only picks those, from the monthly deck and Somewhere in Between. Questions set aside for future monthly decks live on the "Saved for later" tab, which the app doesn't load.
 2. Run `node scripts/cards/build-seed.mjs`. It checks minimum card counts and refuses to write if something's wrong.
 3. Paste `supabase/seed/cards.sql` into the Supabase SQL editor and run it.
 

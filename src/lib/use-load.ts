@@ -13,7 +13,10 @@ export function useLoad<T>(load: () => Promise<T>, key = '') {
 
   const reload = useCallback(() => {
     setError(false);
-    load().then(setData, () => setError(true));
+    load().then(setData, (e) => {
+      if (__DEV__) console.warn('Load failed:', e instanceof Error ? e.message : e);
+      setError(true);
+    });
     // `load` is usually an inline closure; `key` says when it really changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);

@@ -12,6 +12,9 @@ export const colors = {
   cream500: '#A9A288',
   paleCream: '#FEFCF2',
   lilac: '#D1DBFF',
+  // Accent for happy moments only (period days, this month's deck). Never for
+  // errors, buttons or small text.
+  red: '#EF3C3F',
   gradientStart: '#531832',
   gradientEnd: '#8A365A',
   error: '#9B2C2C',

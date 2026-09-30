@@ -3,11 +3,12 @@ import { BookOpen } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { averages, describe, findPatterns, getCheckIns, METRICS, type CheckIn } from '@/lib/body';
+import { averages, describe, findPatterns, getCheckIns, METRICS, symptomSummary, type CheckIn } from '@/lib/body';
 import { addDays, localDate, parseLocalDate } from '@/lib/dates';
 import { readsForPatterns, type ReadSummary } from '@/lib/reads';
 import { colors, fonts, radius, type } from '@/theme/tokens';
 
+import { SYMPTOM_ICONS } from './body-checkin';
 import { Caption, Eyebrow } from './text';
 
 const CHART_HEIGHT = 56;
@@ -41,6 +42,7 @@ export function BodyRecap({ month, label }: { month: string; label: string }) {
 
   const avgs = averages(data.month);
   const patterns = findPatterns(data.month, data.recent);
+  const symptoms = symptomSummary(data.month, data.recent);
   const start = parseLocalDate(`${month}-01`);
   const daysInMonth = new Date(start.getFullYear(), start.getMonth() + 1, 0).getDate();
   const byDay = new Map(data.month.map((c) => [Number(c.day.slice(8, 10)), c]));
@@ -77,7 +79,42 @@ export function BodyRecap({ month, label }: { month: string; label: string }) {
           </View>
         </View>
       ))}
-      <Caption>Lilac marks under the bars are period days.</Caption>
+      <Caption>Red dots under the bars are period days.</Caption>
+
+      {symptoms.length ? (
+        <View style={{ gap: 8 }}>
+          <Text style={[type.labelSm, { color: colors.textSecondary }]}>Symptoms</Text>
+          {symptoms.map((sy) => {
+            const Icon = SYMPTOM_ICONS[sy.key];
+            // Only worth pointing out when most of those days were in that week.
+            const cluster = sy.beforePeriod >= 2 && sy.beforePeriod * 2 >= sy.count;
+            return (
+              <View key={sy.key} style={styles.symptom}>
+                <Icon size={16} color={colors.lilac} strokeWidth={1.6} />
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text style={[type.body, { color: colors.textPrimary }]}>
+                    {sy.label} · {sy.count} {sy.count === 1 ? 'day' : 'days'}
+                  </Text>
+                  {cluster ? (
+                    <Caption>
+                      {sy.beforePeriod === sy.count ? 'All' : `${sy.beforePeriod}`} of them in the week before your period
+                    </Caption>
+                  ) : null}
+                </View>
+                {sy.read ? (
+                  <Pressable
+                    accessibilityRole="link"
+                    accessibilityLabel={`Why ${sy.label.toLowerCase()} happens`}
+                    hitSlop={8}
+                    onPress={() => router.push({ pathname: '/read/[id]', params: { id: sy.read } })}>
+                    <BookOpen size={16} color={colors.lilac} strokeWidth={1.5} />
+                  </Pressable>
+                ) : null}
+              </View>
+            );
+          })}
+        </View>
+      ) : null}
 
       <View style={{ gap: 10 }}>
         {patterns.length ? (
@@ -121,7 +158,8 @@ const styles = StyleSheet.create({
   chart: { flexDirection: 'row', alignItems: 'flex-end', gap: 2, height: CHART_HEIGHT + 8 },
   column: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', gap: 3 },
   bar: { width: '100%', borderRadius: 2, backgroundColor: colors.lilac },
-  periodMark: { width: 4, height: 4, borderRadius: 2, backgroundColor: colors.lilac },
+  periodMark: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: colors.red },
+  symptom: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 4 },
   why: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 },
   pattern: {
     padding: 14,

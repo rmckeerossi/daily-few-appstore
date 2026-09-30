@@ -10,7 +10,7 @@ import { Segmented } from '@/components/segmented';
 import { LoadError, Loading } from '@/components/status';
 import { BodyLight, Eyebrow, ScreenTitle } from '@/components/text';
 import { currentMonthlyDeck, getDecks, type DeckType } from '@/lib/data';
-import { getReads } from '@/lib/reads';
+import { getReads, shelve } from '@/lib/reads';
 import { useSession } from '@/lib/session';
 import { useLoad } from '@/lib/use-load';
 import { colors } from '@/theme/tokens';
@@ -27,7 +27,7 @@ const FILTERS: { value: Filter; label: string }[] = [
 
 const matches: Record<Exclude<Filter, 'reads'>, (t: DeckType) => boolean> = {
   all: () => true,
-  monthly: (t) => t === 'monthly' || t === 'library',
+  monthly: (t) => t === 'monthly',
   season: (t) => t === 'life_season',
   body: (t) => t === 'body',
 };
@@ -72,6 +72,7 @@ export default function Library() {
               key={deck.id}
               deck={deck}
               large={deck.id === featured?.id}
+              badgeAccent={deck.id === featured?.id}
               badge={
                 deck.id === featured?.id
                   ? 'This month'
@@ -102,10 +103,15 @@ function ReadsList() {
     );
   }
   return (
-    <View style={{ gap: 12 }}>
+    <View style={{ gap: 24 }}>
       <BodyLight>Two-minute reads on what your body might be telling you. For understanding, not medical advice.</BodyLight>
-      {reads.map((r) => (
-        <ReadRow key={r.id} read={r} />
+      {shelve(reads).map((shelf) => (
+        <View key={shelf.label ?? 'all'} style={{ gap: 12 }}>
+          {shelf.label ? <Eyebrow>{shelf.label}</Eyebrow> : null}
+          {shelf.reads.map((r) => (
+            <ReadRow key={r.id} read={r} />
+          ))}
+        </View>
       ))}
     </View>
   );

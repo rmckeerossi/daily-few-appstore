@@ -48,9 +48,11 @@ export function DeckRow({ deck, onPress }: { deck: DeckWithCount; onPress: () =>
 }
 
 /** Library tile: art band with the name, then description and meta. */
-export function DeckTile({ deck, badge, large, onPress }: {
+export function DeckTile({ deck, badge, badgeAccent, large, onPress }: {
   deck: DeckWithCount;
   badge?: string | null;
+  /** The red badge, for this month's deck. */
+  badgeAccent?: boolean;
   large?: boolean;
   onPress: () => void;
 }) {
@@ -62,8 +64,8 @@ export function DeckTile({ deck, badge, large, onPress }: {
       <View style={[styles.art, { height: large ? 170 : 120 }]}>
         <DeckArtGradient variant={artVariant(deck.type)} />
         {badge ? (
-          <View style={styles.badge}>
-            <Text style={[type.labelSm, { color: colors.burgundy, letterSpacing: 1 }]}>{badge}</Text>
+          <View style={[styles.badge, badgeAccent && { backgroundColor: colors.red }]}>
+            <Text style={[type.labelSm, { color: badgeAccent ? colors.paleCream : colors.burgundy, letterSpacing: 1 }]}>{badge}</Text>
           </View>
         ) : null}
         <Text style={[type.sheetTitle, styles.tileName]}>{deck.name}</Text>

@@ -26,6 +26,7 @@ export function Sheet({ open, onClose, title, description, children }: {
           <ScrollView
             bounces={false}
             keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="interactive"
             contentContainerStyle={{ gap: 18 }}
             showsVerticalScrollIndicator={false}>
             <Text style={[type.sheetTitle, { color: colors.burgundy }]} accessibilityRole="header">

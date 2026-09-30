@@ -1,17 +1,18 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { RoundIconButton } from '@/components/buttons';
 import { artVariant, CategoryRow } from '@/components/decks';
-import { ReadRow } from '@/components/read-row';
+import { ReadLink } from '@/components/read-row';
 import { DeckArtGradient, NightBackground } from '@/components/gradients';
 import { NAV_CLEARANCE } from '@/components/screen';
 import { LoadError, Loading } from '@/components/status';
 import { BodyLight, Eyebrow } from '@/components/text';
 import { goBack } from '@/lib/nav';
-import { readsForDeck } from '@/lib/reads';
+import { readsForDeck, type ReadSummary } from '@/lib/reads';
 import { getDeckDetail, type DeckType } from '@/lib/data';
 import { monthName, parseLocalDate } from '@/lib/dates';
 import { useLoad } from '@/lib/use-load';
@@ -74,14 +75,7 @@ export default function DeckScreen() {
                   These questions are for reflection, not medical advice.
                 </Text>
               ) : null}
-              {data.reads.length ? (
-                <View style={{ gap: 10 }}>
-                  <Eyebrow>Read first</Eyebrow>
-                  {data.reads.map((r) => (
-                    <ReadRow key={r.id} read={r} />
-                  ))}
-                </View>
-              ) : null}
+              <ReadFirst reads={data.reads} />
               <Eyebrow>Choose a category</Eyebrow>
               <View style={{ gap: 10 }}>
                 {data.categories.map((c) => (
@@ -98,6 +92,25 @@ export default function DeckScreen() {
           )}
         </View>
       </ScrollView>
+    </View>
+  );
+}
+
+/** Short reads for this deck: one slim line, the rest behind "+N more". */
+function ReadFirst({ reads }: { reads: ReadSummary[] }) {
+  const [open, setOpen] = useState(false);
+  if (reads.length === 0) return null;
+  const shown = open ? reads : reads.slice(0, 1);
+  return (
+    <View style={{ gap: 8, marginBottom: 6 }}>
+      {shown.map((r) => (
+        <ReadLink key={r.id} read={r} />
+      ))}
+      {!open && reads.length > 1 ? (
+        <Pressable accessibilityRole="button" hitSlop={8} onPress={() => setOpen(true)} style={{ alignSelf: 'flex-start', paddingHorizontal: 4 }}>
+          <Text style={[type.labelSm, { color: colors.lilac }]}>+{reads.length - 1} more {reads.length - 1 === 1 ? 'read' : 'reads'}</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }

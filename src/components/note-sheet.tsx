@@ -52,6 +52,7 @@ export function NoteSheet({ month, onClose, onSaved }: {
         placeholder="Looking back on the whole month…"
         placeholderTextColor={colors.cream500}
         multiline
+        scrollEnabled={false}
         textAlignVertical="top"
         accessibilityLabel="Your closing reflection"
         style={styles.input}

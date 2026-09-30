@@ -6,6 +6,7 @@ create table public.reads (
   id          text primary key,              -- slug, e.g. 'sleep-and-mood'
   title       text not null,
   summary     text,
+  topic       text,                          -- shelf in the Library, e.g. 'cycle' (see src/lib/reads.ts)
   body        text not null,                 -- simple markdown: ## headings, - lists, **bold**
   minutes     smallint not null default 2,
   deck_ids    text[] not null default '{}',  -- shown as "Read first" on these decks

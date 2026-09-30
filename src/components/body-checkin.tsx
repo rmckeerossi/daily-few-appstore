@@ -1,8 +1,9 @@
-import { Check, Droplet } from 'lucide-react-native';
+import { router } from 'expo-router';
+import { AudioWaveform, Balloon, BookOpen, Check, CloudFog, Droplet, Flame, HeartPulse, Plus, Sparkles, Zap, type LucideIcon } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { getCheckIn, METRICS, saveCheckIn, type CheckIn, type MetricKey } from '@/lib/body';
+import { getCheckIn, METRICS, saveCheckIn, SYMPTOMS, type CheckIn, type MetricKey, type SymptomKey } from '@/lib/body';
 import { colors, radius, type } from '@/theme/tokens';
 
 import { PrimaryButton, TextButton } from './buttons';
@@ -11,7 +12,17 @@ import { useToast } from './toast';
 
 type Values = Omit<CheckIn, 'day'>;
 
-const EMPTY: Values = { energy: null, mood: null, sleep: null, stress: null, cravings: null, period: false };
+const EMPTY: Values = { energy: null, mood: null, sleep: null, stress: null, cravings: null, period: false, symptoms: [] };
+
+export const SYMPTOM_ICONS: Record<SymptomKey, LucideIcon> = {
+  headache: Zap,
+  bloating: Balloon,
+  aches: AudioWaveform,
+  'brain-fog': CloudFog,
+  anxious: HeartPulse,
+  'hot-flashes': Flame,
+  skin: Sparkles,
+};
 
 /** Five taps and done: how the body feels today. Every rating is optional. */
 export function BodyCheckIn() {
@@ -21,6 +32,8 @@ export function BodyCheckIn() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [showSymptoms, setShowSymptoms] = useState(false);
+  const [lastTapped, setLastTapped] = useState<SymptomKey | null>(null);
 
   useEffect(() => {
     getCheckIn().then(
@@ -39,7 +52,13 @@ export function BodyCheckIn() {
   if (!loaded) return null;
 
   const set = (key: MetricKey, n: number) => setValues((v) => ({ ...v, [key]: v[key] === n ? null : n }));
-  const anything = METRICS.some((m) => values[m.key] != null) || values.period;
+  const anything = METRICS.some((m) => values[m.key] != null) || values.period || values.symptoms.length > 0;
+
+  const toggleSymptom = (key: SymptomKey) => {
+    const on = !values.symptoms.includes(key);
+    setValues((v) => ({ ...v, symptoms: on ? [...v.symptoms, key] : v.symptoms.filter((x) => x !== key) }));
+    setLastTapped(on ? key : null);
+  };
 
   const save = async () => {
     setSaving(true);
@@ -71,12 +90,21 @@ export function BodyCheckIn() {
             {logged.map((m) => (
               <View key={m.key} style={styles.pill}>
                 <Text style={[type.labelSm, { color: colors.textSecondary }]}>{m.label}</Text>
-                <Text style={[type.data, { color: colors.lilac }]}>{saved[m.key]}/5</Text>
+                <Text style={[type.labelSm, { color: colors.lilac }]}>{m.steps[(saved[m.key] as number) - 1]}</Text>
               </View>
             ))}
+            {SYMPTOMS.filter((sy) => saved.symptoms.includes(sy.key)).map((sy) => {
+              const Icon = SYMPTOM_ICONS[sy.key];
+              return (
+                <View key={sy.key} style={styles.pill}>
+                  <Icon size={12} color={colors.lilac} strokeWidth={1.8} />
+                  <Text style={[type.labelSm, { color: colors.textSecondary }]}>{sy.label}</Text>
+                </View>
+              );
+            })}
             {saved.period ? (
               <View style={styles.pill}>
-                <Droplet size={12} color={colors.lilac} strokeWidth={1.8} />
+                <Droplet size={12} color={colors.red} strokeWidth={1.8} />
                 <Text style={[type.labelSm, { color: colors.textSecondary }]}>Period</Text>
               </View>
             ) : null}
@@ -94,18 +122,18 @@ export function BodyCheckIn() {
           <View key={m.key} style={{ gap: 8 }}>
             <View style={styles.labelRow}>
               <Text style={[type.body, { color: colors.textPrimary }]}>{m.label}</Text>
-              <Text style={[type.caption, { color: colors.textTertiary }]}>
-                {m.low} · {m.high}
-              </Text>
+              {values[m.key] != null ? (
+                <Text style={[type.bodySm, { color: colors.lilac }]}>{m.steps[(values[m.key] as number) - 1]}</Text>
+              ) : null}
             </View>
-            <View style={styles.dots} accessibilityRole="adjustable" accessibilityLabel={`${m.label}, ${values[m.key] ?? 'not set'} of 5`}>
+            <View style={styles.dots} accessibilityRole="adjustable" accessibilityLabel={`${m.label}, ${values[m.key] != null ? m.steps[(values[m.key] as number) - 1] : 'not set'}`}>
               {[1, 2, 3, 4, 5].map((n) => {
                 const on = values[m.key] != null && n <= (values[m.key] as number);
                 return (
                   <Pressable
                     key={n}
                     accessibilityRole="button"
-                    accessibilityLabel={`${m.label} ${n} of 5`}
+                    accessibilityLabel={`${m.label}: ${m.steps[n - 1]}`}
                     accessibilityState={{ selected: values[m.key] === n }}
                     hitSlop={6}
                     onPress={() => set(m.key, n)}
@@ -114,6 +142,10 @@ export function BodyCheckIn() {
                 );
               })}
             </View>
+            <View style={styles.ends} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+              <Text style={[type.caption, { color: colors.textTertiary }]}>{m.low}</Text>
+              <Text style={[type.caption, { color: colors.textTertiary }]}>{m.high}</Text>
+            </View>
           </View>
         ))}
 
@@ -121,15 +153,28 @@ export function BodyCheckIn() {
           accessibilityRole="checkbox"
           accessibilityState={{ checked: values.period }}
           onPress={() => setValues((v) => ({ ...v, period: !v.period }))}
-          style={[styles.periodChip, values.period && styles.periodOn]}>
-          <Droplet size={16} color={values.period ? colors.burgundy : colors.textSecondary} strokeWidth={1.6} />
-          <Text style={[type.bodySm, { color: values.period ? colors.burgundy : colors.textPrimary }]}>Period today</Text>
+          style={[styles.periodChip, values.period && styles.periodChipOn]}>
+          <Droplet size={16} color={values.period ? colors.paleCream : colors.textSecondary} strokeWidth={1.6} />
+          <Text style={[type.bodySm, { color: colors.textPrimary }]}>Period today</Text>
         </Pressable>
+
+        {showSymptoms || values.symptoms.length > 0 ? (
+          <SymptomChips selected={values.symptoms} lastTapped={lastTapped} onToggle={toggleSymptom} />
+        ) : (
+          <Pressable
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={() => setShowSymptoms(true)}
+            style={({ pressed }) => [styles.addSymptoms, pressed && { opacity: 0.6 }]}>
+            <Plus size={16} color={colors.lilac} strokeWidth={1.8} />
+            <Text style={[type.bodySm, { color: colors.lilac }]}>Add symptoms</Text>
+          </Pressable>
+        )}
 
         <View style={{ gap: 8 }}>
           <PrimaryButton label="Check in" size="md" onPress={save} disabled={!anything} loading={saving} />
           <Text style={[type.caption, { color: colors.textTertiary, textAlign: 'center' }]}>
-            Private to you. Patterns show up in your monthly recap.
+            Private to you. Period days never leave this phone.
           </Text>
         </View>
         {editing ? (
@@ -142,7 +187,60 @@ export function BodyCheckIn() {
   );
 }
 
+/** Optional symptoms, with a short note about the one just tapped. */
+function SymptomChips({ selected, lastTapped, onToggle }: {
+  selected: SymptomKey[];
+  lastTapped: SymptomKey | null;
+  onToggle: (key: SymptomKey) => void;
+}) {
+  const note = SYMPTOMS.find((sy) => sy.key === lastTapped);
+  return (
+    <View style={{ gap: 12 }}>
+      <View style={styles.labelRow}>
+        <Text style={[type.body, { color: colors.textPrimary }]}>Anything else today?</Text>
+        <Text style={[type.caption, { color: colors.textTertiary }]}>Optional</Text>
+      </View>
+      <View style={styles.chips}>
+        {SYMPTOMS.map((sy) => {
+          const on = selected.includes(sy.key);
+          const Icon = SYMPTOM_ICONS[sy.key];
+          return (
+            <Pressable
+              key={sy.key}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: on }}
+              onPress={() => onToggle(sy.key)}
+              style={[styles.periodChip, { alignSelf: 'auto' }, on && styles.periodOn]}>
+              <Icon size={15} color={on ? colors.burgundy : colors.lilac} strokeWidth={1.6} />
+              <Text style={[type.bodySm, { color: on ? colors.burgundy : colors.textPrimary }]}>{sy.label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      {note ? (
+        <View style={styles.note} accessibilityLiveRegion="polite">
+          <Text style={[type.bodySm, { color: colors.textPrimary }]}>{note.line}</Text>
+          {note.read ? (
+            <Pressable
+              accessibilityRole="link"
+              hitSlop={8}
+              onPress={() => router.push({ pathname: '/read/[id]', params: { id: note.read } })}
+              style={styles.noteLink}>
+              <BookOpen size={14} color={colors.lilac} strokeWidth={1.5} />
+              <Text style={[type.labelSm, { color: colors.lilac }]}>Why this happens · 2 min</Text>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  addSymptoms: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6 },
+  note: { gap: 10, padding: 14, borderRadius: radius.row, backgroundColor: colors.lilacTint },
+  noteLink: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   card: {
     padding: 18,
     borderRadius: radius.card,
@@ -150,7 +248,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.surfaceBorder,
   },
-  labelRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+  labelRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', minHeight: 22 },
+  ends: { flexDirection: 'row', justifyContent: 'space-between', marginTop: -2 },
   dots: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
   dot: {
     flex: 1,
@@ -172,6 +271,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(254,252,242,0.24)',
   },
   periodOn: { backgroundColor: colors.lilac, borderColor: colors.lilac },
+  periodChipOn: { backgroundColor: colors.red, borderColor: colors.red },
   doneRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   summary: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   pill: {

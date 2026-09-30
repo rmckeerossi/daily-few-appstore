@@ -2,10 +2,48 @@
 
 import { supabase } from './supabase';
 
+/**
+ * Shelves in the Library, in the order they appear. The first four follow the
+ * formula's four areas. Keep the ids in step with scripts/reads/build-seed.mjs.
+ */
+export const TOPICS = [
+  { id: 'blood-sugar', label: 'Blood Sugar and Metabolism' },
+  { id: 'energy-sleep', label: 'Energy and Sleep' },
+  { id: 'stress', label: 'Stress and Cortisol' },
+  { id: 'cycle', label: 'Your Cycle' },
+  { id: 'pmos', label: 'PMOS (formerly PCOS)' },
+  { id: 'perimenopause', label: 'Perimenopause and Beyond' },
+  { id: 'fertility', label: 'Fertility and Postpartum' },
+  { id: 'birth-control', label: 'Birth Control' },
+  { id: 'mood', label: 'Mood and Mind' },
+  { id: 'food', label: 'Food and Cravings' },
+  { id: 'gut', label: 'Gut Health' },
+] as const;
+
+export function topicLabel(id: string | null): string | null {
+  return TOPICS.find((t) => t.id === id)?.label ?? null;
+}
+
+/**
+ * Reads grouped onto shelves. A topic only gets its own shelf once it has two
+ * or more reads; the rest sit together at the end ("More reads"), or as a
+ * plain list while no topic has two yet.
+ */
+export function shelve<T extends { topic: string | null }>(reads: T[]): { label: string | null; reads: T[] }[] {
+  const shelves = TOPICS.map((t) => ({ label: t.label as string | null, reads: reads.filter((r) => r.topic === t.id) })).filter(
+    (s) => s.reads.length >= 2,
+  );
+  const shelved = new Set(shelves.flatMap((s) => s.reads));
+  const rest = reads.filter((r) => !shelved.has(r));
+  if (rest.length) shelves.push({ label: shelves.length ? 'More reads' : null, reads: rest });
+  return shelves;
+}
+
 export type ReadSummary = {
   id: string;
   title: string;
   summary: string | null;
+  topic: string | null;
   minutes: number;
   deck_ids: string[];
   patterns: string[];
@@ -13,7 +51,7 @@ export type ReadSummary = {
 
 export type Read = ReadSummary & { body: string; card_deck: string | null };
 
-const SUMMARY = 'id, title, summary, minutes, deck_ids, patterns';
+const SUMMARY = 'id, title, summary, topic, minutes, deck_ids, patterns';
 
 export async function getReads(): Promise<ReadSummary[]> {
   const { data, error } = await supabase.from('reads').select(SUMMARY).order('sort_order');

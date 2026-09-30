@@ -7,6 +7,9 @@
 // longer in the spreadsheet is archived (never deleted, so people's past answers
 // keep pointing at it).
 //
+// "Card of the day" = Yes marks the cards that can be everyone's card of the
+// day. Only monthly and library (Somewhere in Between) decks can use it.
+//
 // Card IDs are derived from deck + question text, so rewording a question in the
 // spreadsheet creates a new card and archives the old one. Answers keep their
 // original wording either way.
@@ -144,13 +147,20 @@ for (const r of cardRows) {
     categoryId: categories.get(catKey).id,
     question: r.question,
     sort: cards.filter((c) => c.deckId === deck.id).length,
+    everyday: /^y/i.test(r["card of the day"] ?? ""),
   });
+  if (/^y/i.test(r["card of the day"] ?? "") && deck.type !== "monthly" && deck.type !== "library") {
+    errors.push(`Card "${r.question.slice(0, 40)}…": only monthly and library cards can be card of the day`);
+  }
 }
 
 for (const d of decks) {
   const count = cards.filter((c) => c.deckId === d.id).length;
   if (d.status === "published" && count < d.min) {
     errors.push(`Deck "${d.name}" is marked ready but has ${count} cards (needs ${d.min})`);
+  }
+  if ((d.type === "monthly" || d.type === "library") && d.status === "published" && !cards.some((c) => c.deckId === d.id && c.everyday)) {
+    errors.push(`Deck "${d.name}" has no cards marked "Card of the day"`);
   }
 }
 
@@ -178,9 +188,9 @@ out.push("insert into public.categories (id, deck_id, name, sort_order, archived
 out.push([...categories.values()].map((c) => `  (${sql(c.id)}, ${sql(c.deckId)}, ${sql(c.name)}, ${c.sort}, false)`).join(",\n"));
 out.push("on conflict (id) do update set name = excluded.name, sort_order = excluded.sort_order, archived = false;", "");
 
-out.push("insert into public.cards (id, deck_id, category_id, question, sort_order, archived) values");
-out.push(cards.map((c) => `  (${sql(c.id)}, ${sql(c.deckId)}, ${sql(c.categoryId)}, ${sql(c.question)}, ${c.sort}, false)`).join(",\n"));
-out.push("on conflict (id) do update set deck_id = excluded.deck_id, category_id = excluded.category_id, question = excluded.question, sort_order = excluded.sort_order, archived = false;", "");
+out.push("insert into public.cards (id, deck_id, category_id, question, sort_order, everyday, archived) values");
+out.push(cards.map((c) => `  (${sql(c.id)}, ${sql(c.deckId)}, ${sql(c.categoryId)}, ${sql(c.question)}, ${c.sort}, ${c.everyday}, false)`).join(",\n"));
+out.push("on conflict (id) do update set deck_id = excluded.deck_id, category_id = excluded.category_id, question = excluded.question, sort_order = excluded.sort_order, everyday = excluded.everyday, archived = false;", "");
 
 out.push("-- Anything no longer in the spreadsheet is archived, never deleted.");
 out.push(`update public.cards set archived = true where not archived and id not in (${cards.map((c) => sql(c.id)).join(", ")});`);

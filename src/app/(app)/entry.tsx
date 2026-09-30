@@ -3,6 +3,7 @@ import { Lock, X } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { KeyboardDone } from '@/components/keyboard-done';
 import { PrimaryButton, RoundIconButton, TextButton } from '@/components/buttons';
 import { PhotoGrid, type PhotoSlot } from '@/components/photo-grid';
 import { Screen } from '@/components/screen';
@@ -151,6 +152,8 @@ export default function EntryScreen() {
       selectionColor={colors.lilac}
       keyboardAppearance="dark"
       multiline
+      // Grows with the text, so a swipe down anywhere puts the keyboard away.
+      scrollEnabled={false}
       autoFocus={!isMoment && !params.id}
       textAlignVertical="top"
       accessibilityLabel={isMoment ? 'Caption' : 'Your entry'}
@@ -175,7 +178,7 @@ export default function EntryScreen() {
       <View style={styles.topBar}>
         <RoundIconButton icon={X} size={40} accessibilityLabel="Close" onPress={close} />
         <Eyebrow>{params.id ? copy.editLabel : copy.newLabel}</Eyebrow>
-        <View style={{ width: 40 }} />
+        <KeyboardDone />
       </View>
 
       {loadFailed ? (

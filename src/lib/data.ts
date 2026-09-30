@@ -2,6 +2,7 @@
 // limits every private table to the signed-in person; nothing here relies on the
 // app to enforce privacy.
 
+import { forgetPeriodDays } from './body';
 import { addDays, daysBetween, localDate, localMonthStart, parseLocalDate } from './dates';
 import { supabase } from './supabase';
 
@@ -537,6 +538,7 @@ export async function deleteMyAccount(userId: string) {
   }
   const { error } = await supabase.rpc('delete_my_account');
   if (error) throw new Error(error.message);
+  forgetPeriodDays(userId);
   // The account no longer exists; just clear the session on this phone.
   await supabase.auth.signOut({ scope: 'local' });
 }

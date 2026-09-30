@@ -1,37 +1,165 @@
 // Body check-in: a quick daily rating of how the body feels, and the patterns
 // that show up over a month. Private to the person, never used for marketing,
 // never in admin reports. For reflection, not medical advice.
+// Ratings and symptoms sync to the server; period days stay on the phone.
 
 import { addDays, localDate, parseLocalDate } from './dates';
 import { supabase } from './supabase';
 
+// `steps` names each point on the 1 to 5 scale, so a tap reads as a word.
 export const METRICS = [
-  { key: 'energy', label: 'Energy', low: 'Drained', high: 'Full' },
-  { key: 'mood', label: 'Mood', low: 'Low', high: 'Bright' },
-  { key: 'sleep', label: 'Sleep', low: 'Rough', high: 'Rested' },
-  { key: 'stress', label: 'Stress', low: 'Calm', high: 'Stretched' },
-  { key: 'cravings', label: 'Cravings', low: 'None', high: 'Strong' },
+  { key: 'energy', label: 'Energy', low: 'Drained', high: 'Full', steps: ['Drained', 'Low', 'Okay', 'Good', 'Full'] },
+  { key: 'mood', label: 'Mood', low: 'Low', high: 'Bright', steps: ['Low', 'Flat', 'Okay', 'Good', 'Bright'] },
+  { key: 'sleep', label: 'Sleep', low: 'Rough', high: 'Rested', steps: ['Rough', 'Restless', 'Okay', 'Good', 'Rested'] },
+  { key: 'stress', label: 'Stress', low: 'Calm', high: 'Stretched', steps: ['Calm', 'Mostly calm', 'Some', 'High', 'Stretched'] },
+  { key: 'cravings', label: 'Cravings', low: 'None', high: 'Strong', steps: ['None', 'Mild', 'Some', 'Noticeable', 'Strong'] },
 ] as const;
 
 export type MetricKey = (typeof METRICS)[number]['key'];
 
-export type CheckIn = { day: string; period: boolean } & Record<MetricKey, number | null>;
+/**
+ * Optional symptom chips. `line` is the short note shown when one is tapped;
+ * `read` is the short read it links to, if there is one.
+ * Keep the keys in step with the check in 20261001000009_body_symptoms.sql.
+ */
+export const SYMPTOMS = [
+  {
+    key: 'headache',
+    label: 'Headache',
+    line: 'Headaches can follow short sleep, skipped meals, stress or the days around your period. Your recap will show if yours cluster.',
+    read: null,
+  },
+  {
+    key: 'bloating',
+    label: 'Bloating',
+    line: 'Bloating often tags along with the week before a period, a rushed lunch or a stressful day. Your recap will show which it is for you.',
+    read: 'bloating-and-your-cycle',
+  },
+  {
+    key: 'aches',
+    label: 'Aches or cramps',
+    line: 'Achy days are worth noting. If cramps regularly stop you doing normal things, that’s worth raising with your doctor.',
+    read: null,
+  },
+  {
+    key: 'brain-fog',
+    label: 'Brain fog',
+    line: 'Sleep, stress, low iron and shifting hormones can all turn the lights down. Brain fog usually has a reason.',
+    read: 'brain-fog',
+  },
+  {
+    key: 'anxious',
+    label: 'Anxious',
+    line: 'Anxiety can have a physical side too, like a short night, caffeine or the week before your period. It’s real either way.',
+    read: 'anxiety-from-nowhere',
+  },
+  {
+    key: 'hot-flashes',
+    label: 'Hot flashes or night sweats',
+    line: 'These are one of the best-known signs of shifting hormones in perimenopause, and very treatable. Worth mentioning to your doctor.',
+    read: 'perimenopause-signs-people-miss',
+  },
+  {
+    key: 'skin',
+    label: 'Skin breakouts',
+    line: 'Breakouts often follow your cycle, stress or sleep. If they stick around alongside irregular periods, mention it to your doctor.',
+    read: null,
+  },
+] as const;
 
-const SELECT = 'day, energy, mood, sleep, stress, cravings, period';
+export type SymptomKey = (typeof SYMPTOMS)[number]['key'];
+
+/** `period` comes from this phone only; everything else syncs. */
+export type CheckIn = { day: string; period: boolean; symptoms: SymptomKey[] } & Record<MetricKey, number | null>;
+
+const SELECT = 'day, energy, mood, sleep, stress, cravings, symptoms';
+
+// ---------------------------------------------------------------------------
+// Period days: kept on this phone only, never sent to the server.
+// ---------------------------------------------------------------------------
+
+async function userId(): Promise<string> {
+  const { data } = await supabase.auth.getSession();
+  const id = data.session?.user.id;
+  if (!id) throw new Error('Not signed in');
+  return id;
+}
+
+const periodKey = (uid: string) => `period-days:${uid}`;
+const movedKey = (uid: string) => `period-days-moved:${uid}`;
+
+function readPeriodDays(uid: string): Set<string> {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(periodKey(uid)) ?? '[]') as string[]);
+  } catch {
+    return new Set();
+  }
+}
+
+function writePeriodDays(uid: string, days: Set<string>) {
+  localStorage.setItem(periodKey(uid), JSON.stringify([...days].sort()));
+}
+
+/**
+ * Period days used to be saved on the server. Once per person on this phone,
+ * copy any that are there to the phone, then clear them from the server.
+ */
+async function movePeriodDaysToPhone(uid: string) {
+  if (localStorage.getItem(movedKey(uid))) return;
+  const { data, error } = await supabase.from('body_checkins').select('day').eq('period', true);
+  if (!error && data?.length) {
+    const days = readPeriodDays(uid);
+    for (const r of data) days.add(r.day as string);
+    writePeriodDays(uid, days);
+    const { error: clearError } = await supabase.from('body_checkins').update({ period: false }).eq('period', true);
+    if (clearError) return; // Try again next time.
+  }
+  // An error on the select means the column is gone: nothing left to move.
+  localStorage.setItem(movedKey(uid), '1');
+}
+
+/** Called when the account is deleted, so nothing is left behind on the phone. */
+export function forgetPeriodDays(uid: string) {
+  try {
+    localStorage.removeItem(periodKey(uid));
+    localStorage.removeItem(movedKey(uid));
+  } catch {}
+}
+
+type Row = Omit<CheckIn, 'period'>;
+const EMPTY_ROW = { energy: null, mood: null, sleep: null, stress: null, cravings: null, symptoms: [] as SymptomKey[] };
 
 export async function getCheckIn(day = localDate()): Promise<CheckIn | null> {
+  const uid = await userId();
+  await movePeriodDaysToPhone(uid);
   const { data, error } = await supabase.from('body_checkins').select(SELECT).eq('day', day).maybeSingle();
   if (error) throw new Error(error.message);
-  return data as CheckIn | null;
+  const period = readPeriodDays(uid).has(day);
+  if (!data && !period) return null;
+  return { ...EMPTY_ROW, day, ...(data as Row | null), period };
 }
 
 export async function saveCheckIn(values: Omit<CheckIn, 'day'>, day = localDate()) {
-  const { error } = await supabase.from('body_checkins').upsert({ day, ...values }, { onConflict: 'user_id,day' });
-  if (error) throw new Error(error.message);
+  const uid = await userId();
+  const { period, ...synced } = values;
+  if (METRICS.some((m) => synced[m.key] != null) || synced.symptoms.length > 0) {
+    const { error } = await supabase.from('body_checkins').upsert({ day, ...synced }, { onConflict: 'user_id,day' });
+    if (error) throw new Error(error.message);
+  } else {
+    // Nothing left to sync for the day: don't keep an empty row.
+    const { error } = await supabase.from('body_checkins').delete().eq('day', day);
+    if (error) throw new Error(error.message);
+  }
+  const days = readPeriodDays(uid);
+  if (period) days.add(day);
+  else days.delete(day);
+  writePeriodDays(uid, days);
 }
 
-/** Check-ins from `from` to `to` inclusive ("YYYY-MM-DD"), oldest first. */
+/** Check-ins from `from` to `to` inclusive ("YYYY-MM-DD"), oldest first, with this phone's period days. */
 export async function getCheckIns(from: string, to: string): Promise<CheckIn[]> {
+  const uid = await userId();
+  await movePeriodDaysToPhone(uid);
   const { data, error } = await supabase
     .from('body_checkins')
     .select(SELECT)
@@ -39,7 +167,27 @@ export async function getCheckIns(from: string, to: string): Promise<CheckIn[]> 
     .lte('day', to)
     .order('day');
   if (error) throw new Error(error.message);
-  return (data ?? []) as CheckIn[];
+  const period = readPeriodDays(uid);
+  const byDay = new Map<string, CheckIn>();
+  for (const r of (data ?? []) as Row[]) byDay.set(r.day, { ...r, period: period.has(r.day) });
+  for (const d of period) {
+    if (d >= from && d <= to && !byDay.has(d)) byDay.set(d, { ...EMPTY_ROW, day: d, period: true });
+  }
+  return [...byDay.values()].sort((a, b) => (a.day < b.day ? -1 : 1));
+}
+
+/**
+ * How often each symptom showed up this month, and how many of those days fell
+ * in the week before a period.
+ */
+export function symptomSummary(month: CheckIn[], recent: CheckIn[]) {
+  const pre = premenstrualDays(recent);
+  return SYMPTOMS.map((s) => {
+    const days = month.filter((c) => c.symptoms.includes(s.key));
+    return { ...s, count: days.length, beforePeriod: days.filter((c) => pre.has(c.day)).length };
+  })
+    .filter((s) => s.count > 0)
+    .sort((a, b) => b.count - a.count);
 }
 
 // Showing it on Home is a setting on this phone.

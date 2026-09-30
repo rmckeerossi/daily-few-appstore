@@ -2,6 +2,7 @@
 id: the-week-before-your-period
 title: Why the week before your period can feel so different
 summary: Energy, mood, sleep and cravings often shift in the days before a period. Here’s what’s changing.
+topic: cycle
 minutes: 2
 order: 1
 decks: my-cycle, listening-to-my-body, energy-and-rhythm

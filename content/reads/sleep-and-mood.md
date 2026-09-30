@@ -2,6 +2,7 @@
 id: sleep-and-mood
 title: Why one rough night can colour the whole next day
 summary: Sleep and mood are closely linked. A short look at why a bad night makes everything feel harder.
+topic: energy-sleep
 minutes: 2
 order: 2
 decks: energy-and-rhythm, listening-to-my-body

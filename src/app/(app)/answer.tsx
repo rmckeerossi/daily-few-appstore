@@ -3,6 +3,7 @@ import { Lock, X } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
+import { KeyboardDone } from '@/components/keyboard-done';
 import { PrimaryButton, RoundIconButton } from '@/components/buttons';
 import { PhotoGrid, type PhotoSlot } from '@/components/photo-grid';
 import { QuestionPanel } from '@/components/question-card';
@@ -125,7 +126,7 @@ export default function AnswerScreen() {
       <View style={styles.topBar}>
         <RoundIconButton icon={X} size={40} accessibilityLabel="Close" onPress={close} />
         <Eyebrow>{editing ? 'Edit answer' : 'New answer'}</Eyebrow>
-        <View style={{ width: 40 }} />
+        <KeyboardDone />
       </View>
 
       {error ? (
@@ -147,6 +148,8 @@ export default function AnswerScreen() {
             selectionColor={colors.lilac}
             keyboardAppearance="dark"
             multiline
+            // Grows with the text, so a swipe down anywhere puts the keyboard away.
+            scrollEnabled={false}
             autoFocus={!editing}
             textAlignVertical="top"
             accessibilityLabel="Your answer"

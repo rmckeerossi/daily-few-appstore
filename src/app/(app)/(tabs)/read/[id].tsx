@@ -8,7 +8,7 @@ import { Screen } from '@/components/screen';
 import { LoadError, Loading } from '@/components/status';
 import { BodyLight, Caption, Eyebrow } from '@/components/text';
 import { goBack } from '@/lib/nav';
-import { getRead } from '@/lib/reads';
+import { getRead, topicLabel } from '@/lib/reads';
 import { useLoad } from '@/lib/use-load';
 import { colors, fonts } from '@/theme/tokens';
 
@@ -33,7 +33,7 @@ export default function ReadScreen() {
           <View style={{ gap: 14 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <BookOpen size={14} color={colors.lilac} strokeWidth={1.5} />
-              <Eyebrow color={colors.lilac}>Short read · {read.minutes} min</Eyebrow>
+              <Eyebrow color={colors.lilac}>{topicLabel(read.topic) ?? 'Short read'} · {read.minutes} min</Eyebrow>
             </View>
             <Text style={{ fontFamily: fonts.displayLight, fontSize: 38, lineHeight: 40, color: colors.textPrimary }}>
               {read.title}

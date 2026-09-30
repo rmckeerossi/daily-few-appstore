@@ -2,9 +2,10 @@
 id: stress-and-cravings
 title: Stress, cravings and what’s happening in between
 summary: Why stressful days often come with stronger cravings, and why it isn’t about willpower.
+topic: stress
 minutes: 2
 order: 3
-decks: energy-and-rhythm, looking-for-answers
+decks: stress-and-my-body, energy-and-rhythm, looking-for-answers
 patterns: stress-cravings
 card_deck: energy-and-rhythm
 reviewed: false
