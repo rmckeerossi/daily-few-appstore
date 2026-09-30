@@ -9,7 +9,7 @@ import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Platform } from 'react-native';
 
 import { localDate, timeZone } from './dates';
-import { pendingSharedCard } from './links';
+import { pendingAttribution, pendingSharedCard } from './links';
 import type { SignupDraft } from './signup';
 import { supabase } from './supabase';
 
@@ -67,6 +67,7 @@ export async function completeProfile(d: SignupDraft) {
     p_text_consent: !!phone && d.textConsent,
     p_timezone: timeZone(),
     p_shared_card_id: pendingSharedCard(),
+    p_attribution: pendingAttribution(),
   });
   if (error) throw new Error(error.message);
 }

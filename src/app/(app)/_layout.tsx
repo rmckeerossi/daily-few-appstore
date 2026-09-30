@@ -3,7 +3,7 @@ import { router, Stack, type Href } from 'expo-router';
 import { useEffect } from 'react';
 
 import { currentMonthlyDeck, getDecks, seasonDeck } from '@/lib/data';
-import { clearSharedCard, pendingSharedCard } from '@/lib/links';
+import { clearAttribution, clearSharedCard, pendingSharedCard } from '@/lib/links';
 import { syncReminders } from '@/lib/notifications';
 import { useSession } from '@/lib/session';
 import { colors } from '@/theme/tokens';
@@ -33,6 +33,8 @@ export default function AppLayout() {
   // (or this month's deck), with no tour first (PRD Flow A step 6).
   useEffect(() => {
     if (!profile) return;
+    // Saved on the profile at signup; nothing more to keep on the phone.
+    clearAttribution();
     // Arrived from a shared card link: that card comes first, whether they
     // just signed up or signed back in.
     const shared = pendingSharedCard();

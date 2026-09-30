@@ -31,13 +31,19 @@ In Supabase, open **Table Editor**, switch the schema dropdown (top left) from `
 | Report | What it shows |
 |---|---|
 | `summary` | Headline numbers: total users, signups (7/30 days), active users, shared-link signups, opt-ins |
-| `users` | The user list and export: name, email, birthday, phone, season, signup date, shared-link signup, email and text consent |
+| `users` | The user list and export: name, email, birthday, phone, season, signup date, shared-link signup, email and text consent, UTM tags, referral tag and who referred them |
 | `signups_by_day` | New signups per day, and how many came from shared links |
 | `activity_by_day` | Daily active users, cards answered, skipped and shared, % who answered card of the day |
 | `active_by_month` | Monthly active users |
 | `card_stats` | Every card: drawn, answered, skipped, shared (sort to find most answered or most skipped) |
 | `deck_stats` | Every deck: active cards, drawn, answered, skipped |
 | `monthly_deck_calendar` | The next 12 months and which have a monthly deck, so gaps show early |
+| `signups_by_source` | Signups by UTM source, medium and campaign (or "shared link"), with email opt-ins |
+| `referrals` | Whose shared links brought people in, and how many signups each |
+| `content_by_day` | Cards viewed, reads opened, cards shared, signups, and email/text opt-ins and opt-outs per day |
+| `read_stats` | Every short read: times opened and how many people |
+
+Links can carry campaign tags, e.g. `https://app.dailyfew.com/c/<card id>?utm_source=instagram&utm_medium=social&utm_campaign=launch`. Card links shared from the app add the sharer's referral code (`?ref=`). Both are saved on the new person's profile when they sign up.
 
 These are counts and signup details only. None of them read what anyone wrote, recorded or photographed.
 

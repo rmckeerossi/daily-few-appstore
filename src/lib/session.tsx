@@ -2,6 +2,7 @@ import type { Session } from '@supabase/supabase-js';
 import { createContext, use, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { getProfile, logActivity, type Profile } from './data';
+import { setMyReferralCode } from './links';
 import { localDate } from './dates';
 import { supabase } from './supabase';
 
@@ -47,7 +48,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
     if (!quiet) setProfileLoading(true);
     try {
-      setProfile(await getProfile(next.user.id));
+      const loaded = await getProfile(next.user.id);
+      setMyReferralCode(loaded?.referral_code ?? null);
+      setProfile(loaded);
     } catch {
       if (!quiet) setProfile(null);
     } finally {

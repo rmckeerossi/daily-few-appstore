@@ -2,7 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect } from 'react';
 
 import { NightBackground } from '@/components/gradients';
-import { isCardId, rememberSharedCard } from '@/lib/links';
+import { isCardId, rememberAttribution, rememberSharedCard } from '@/lib/links';
 import { useSession } from '@/lib/session';
 
 /**
@@ -10,7 +10,8 @@ import { useSession } from '@/lib/session';
  * Signed in: straight to that card. Not yet: remember it, and signup opens it.
  */
 export default function SharedCardLink() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const params = useLocalSearchParams<{ id: string }>();
+  const { id } = params;
   const { session, profile } = useSession();
   const signedIn = !!session && !!profile;
 
@@ -21,8 +22,12 @@ export default function SharedCardLink() {
       router.replace({ pathname: '/draw', params: { card: id, at: String(Date.now()) } });
     } else {
       rememberSharedCard(id);
+      // UTM tags and the sharer's referral code, saved on the profile at signup.
+      rememberAttribution(params);
       router.replace('/');
     }
+    // Only the id decides where to go; the tags are read once with it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, signedIn]);
 
   return <NightBackground />;

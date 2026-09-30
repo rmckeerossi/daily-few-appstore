@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Check, Send } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { PrimaryButton, RoundIconButton, TextButton } from '@/components/buttons';
@@ -24,6 +24,7 @@ import {
   getLookingBack,
   getSeasons,
   logActivity,
+  logCardViewed,
   markReflected,
   seasonDeck,
 } from '@/lib/data';
@@ -66,6 +67,10 @@ export default function Home() {
   const now = new Date();
 
   const card = data?.card ?? null;
+
+  useEffect(() => {
+    if (card) logCardViewed(card);
+  }, [card]);
 
   const answer = () => {
     if (!card) return;

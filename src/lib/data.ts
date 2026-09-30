@@ -43,6 +43,8 @@ export type Profile = {
   reminder_enabled: boolean;
   reminder_time: string | null;
   timezone: string | null;
+  /** Added to the card links they share, so signups can be credited to them. */
+  referral_code: string | null;
 };
 
 export type PastAnswer = {
@@ -65,6 +67,8 @@ export type AnswerRow = PastAnswer & {
 
 export type ActivityEvent =
   | 'app_open'
+  | 'card_viewed'
+  | 'read_opened'
   | 'card_drawn'
   | 'card_skipped'
   | 'card_answered'
@@ -91,7 +95,7 @@ export async function getProfile(userId: string): Promise<Profile | null> {
   return must(
     await supabase
       .from('profiles')
-      .select('id, first_name, phone, season_id, email_consent, text_consent, reminder_enabled, reminder_time, timezone')
+      .select('id, first_name, phone, season_id, email_consent, text_consent, reminder_enabled, reminder_time, timezone, referral_code')
       .eq('id', userId)
       .maybeSingle(),
   );
@@ -547,11 +551,23 @@ export async function deleteMyAccount(userId: string) {
 // Activity for the admin's anonymous metrics. Never blocks the person.
 // ---------------------------------------------------------------------------
 
-export function logActivity(event: ActivityEvent, card?: { id: string; deckId: string } | null) {
+// Events carry which card or read, never anything the person wrote.
+// Signups and marketing opt-ins/outs are logged by the database itself.
+export function logActivity(event: ActivityEvent, card?: { id: string; deckId: string } | null, readId?: string) {
   supabase
     .from('activity')
-    .insert({ event, card_id: card?.id ?? null, deck_id: card?.deckId || null })
+    .insert({ event, card_id: card?.id ?? null, deck_id: card?.deckId || null, read_id: readId ?? null })
     .then(({ error }) => {
       if (error && __DEV__) console.warn(`activity ${event}: ${error.message}`);
     });
+}
+
+// Card of the day is on Home, which reloads often: count one view per card per day.
+const viewed = new Set<string>();
+
+export function logCardViewed(card: { id: string; deckId: string }) {
+  const key = `${localDate()}|${card.id}`;
+  if (viewed.has(key)) return;
+  viewed.add(key);
+  logActivity('card_viewed', card);
 }

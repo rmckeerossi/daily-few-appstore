@@ -92,6 +92,7 @@ function DrawSession({ params }: { params: Params }) {
   useEffect(() => {
     if (!card) return;
     logActivity('card_drawn', card);
+    logActivity('card_viewed', card);
     getPastAnswers(card.id).then(setPast, () => setPast([]));
   }, [card]);
 

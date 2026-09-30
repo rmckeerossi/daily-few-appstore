@@ -1,5 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { BookOpen, ChevronLeft } from 'lucide-react-native';
+import { useEffect } from 'react';
 import { Text, View } from 'react-native';
 
 import { PrimaryButton, RoundIconButton } from '@/components/buttons';
@@ -8,6 +9,7 @@ import { Screen } from '@/components/screen';
 import { LoadError, Loading } from '@/components/status';
 import { BodyLight, Caption, Eyebrow } from '@/components/text';
 import { goBack } from '@/lib/nav';
+import { logActivity } from '@/lib/data';
 import { getRead, topicLabel } from '@/lib/reads';
 import { useLoad } from '@/lib/use-load';
 import { colors, fonts } from '@/theme/tokens';
@@ -17,6 +19,10 @@ export default function ReadScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data, error, reload } = useLoad(() => getRead(id), id);
   const read = data?.id === id ? data : null;
+
+  useEffect(() => {
+    if (read) logActivity('read_opened', null, read.id);
+  }, [read?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <Screen withNav withTopBar gap={24}>

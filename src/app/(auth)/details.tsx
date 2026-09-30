@@ -10,7 +10,7 @@ import { StepScreen } from '@/components/step';
 import { Caption } from '@/components/text';
 import { rememberSignupForApple, signInWithApple, takePendingSignup } from '@/lib/apple';
 import { ageOn, localDate, timeZone } from '@/lib/dates';
-import { pendingSharedCard } from '@/lib/links';
+import { pendingAttribution, pendingSharedCard } from '@/lib/links';
 import { useSession } from '@/lib/session';
 import { useSignup } from '@/lib/signup';
 import { supabase } from '@/lib/supabase';
@@ -103,6 +103,7 @@ export default function DetailsStep() {
           text_consent: hasPhone && textConsent,
           timezone: timeZone(),
           shared_card_id: pendingSharedCard(),
+          attribution: pendingAttribution(),
         },
       },
     });
