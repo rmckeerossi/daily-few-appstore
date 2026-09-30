@@ -19,6 +19,7 @@
   ],
   "exclude": [
     "reference",
+    "supabase/functions",
     "node_modules"
   ]
 }

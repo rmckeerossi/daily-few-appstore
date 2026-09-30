@@ -19,7 +19,9 @@ import {
   type ProfilePatch,
   type Season,
 } from '@/lib/data';
+import { revokeAppleSignIn, usesAppleSignIn } from '@/lib/apple';
 import { checkInShown, setCheckInShown } from '@/lib/body';
+import { crashReportingEnabled, Sentry } from '@/lib/crash-reporting';
 import { lockEnabled, lockMethod, setLockEnabled, unlock, type LockMethod } from '@/lib/app-lock';
 import { timeZone } from '@/lib/dates';
 import { anniversariesEnabled, askForNotifications, setAnniversariesEnabled, syncReminders } from '@/lib/notifications';
@@ -93,6 +95,19 @@ export default function Profile() {
 
   const remove = async () => {
     setDeleting(true);
+    // Signed up with Apple: cancel Daily Few's access to their Apple ID first.
+    if (usesAppleSignIn(session.user)) {
+      try {
+        if (!(await revokeAppleSignIn())) {
+          setDeleting(false);
+          toast('Confirm with Apple to delete your account.');
+          return;
+        }
+      } catch (e) {
+        // Never trap someone in an account they want gone: note it and carry on.
+        if (crashReportingEnabled) Sentry.captureException(e);
+      }
+    }
     try {
       await deleteMyAccount(profile.id);
       // Signed out: the app returns to the welcome screen on its own.

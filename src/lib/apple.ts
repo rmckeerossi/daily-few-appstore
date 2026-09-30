@@ -54,6 +54,34 @@ export async function signInWithApple(): Promise<boolean> {
   return true;
 }
 
+/** Whether this account was created with, or has used, Sign in with Apple. */
+export function usesAppleSignIn(user: { app_metadata?: { provider?: string; providers?: string[] } }): boolean {
+  const m = user.app_metadata ?? {};
+  return m.provider === 'apple' || (m.providers ?? []).includes('apple');
+}
+
+/**
+ * Before deleting an Apple account: a quick confirm with Apple gives a fresh
+ * one-time code, which the apple-revoke function uses to cancel Daily Few's
+ * access to their Apple ID (App Store guideline 5.1.1(v)).
+ * Returns false if they cancelled Apple's sheet. Throws if revoking failed.
+ */
+export async function revokeAppleSignIn(): Promise<boolean> {
+  let credential: AppleAuthentication.AppleAuthenticationCredential;
+  try {
+    credential = await AppleAuthentication.signInAsync({ requestedScopes: [] });
+  } catch (e) {
+    if ((e as { code?: string }).code === 'ERR_REQUEST_CANCELED') return false;
+    throw e;
+  }
+  if (!credential.authorizationCode) throw new Error('No authorization code from Apple');
+  const { error } = await supabase.functions.invoke('apple-revoke', {
+    body: { authorizationCode: credential.authorizationCode },
+  });
+  if (error) throw new Error(error.message);
+  return true;
+}
+
 /** Creates the profile for an account that doesn't have one yet (18+ enforced on the server). */
 export async function completeProfile(d: SignupDraft) {
   if (!d.birthday) throw new Error('Birthday missing');
