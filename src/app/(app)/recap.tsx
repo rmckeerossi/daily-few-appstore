@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AnswerSheet } from '@/components/answer-sheet';
+import { BodyRecap } from '@/components/body-recap';
 import { OutlineButton, RoundIconButton } from '@/components/buttons';
 import { CardGradient, NightBackground } from '@/components/gradients';
 import { NoteSheet } from '@/components/note-sheet';
@@ -85,6 +86,8 @@ export default function Recap() {
                   <BodyLight>As {label} closes, what are you carrying out of it?</BodyLight>
                 )}
               </View>
+
+              <BodyRecap month={month} label={label} />
 
               {items.length === 0 ? (
                 <View style={{ gap: 16, alignItems: 'flex-start' }}>

@@ -19,6 +19,7 @@ import {
   type ProfilePatch,
   type Season,
 } from '@/lib/data';
+import { checkInShown, setCheckInShown } from '@/lib/body';
 import { lockEnabled, lockMethod, setLockEnabled, unlock, type LockMethod } from '@/lib/app-lock';
 import { timeZone } from '@/lib/dates';
 import { anniversariesEnabled, askForNotifications, setAnniversariesEnabled, syncReminders } from '@/lib/notifications';
@@ -54,6 +55,7 @@ export default function Profile() {
 
   const [locked, setLocked] = useState(lockEnabled);
   const [anniversaries, setAnniversaries] = useState(anniversariesEnabled);
+  const [bodyCheckIn, setBodyCheckIn] = useState(checkInShown);
   const [method, setMethod] = useState<LockMethod>(null);
   const lockLabel = method === 'Face ID' || method === 'Touch ID' ? `Lock with ${method}` : 'Lock with passcode';
 
@@ -200,6 +202,19 @@ export default function Profile() {
             <Text style={[type.button, { color: colors.lilac }]}>Add a phone number</Text>
           </Pressable>
         ) : null}
+      </View>
+
+      <View>
+        <Eyebrow>Your body</Eyebrow>
+        <ToggleRow
+          label="Body check-in"
+          description="A 10-second check on Home, with patterns in your monthly recap. Private to you."
+          value={bodyCheckIn}
+          onChange={(on) => {
+            setCheckInShown(on);
+            setBodyCheckIn(on);
+          }}
+        />
       </View>
 
       <View>

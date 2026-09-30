@@ -6,6 +6,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { PrimaryButton, RoundIconButton, TextButton } from '@/components/buttons';
 import { AnswerSheet } from '@/components/answer-sheet';
+import { BodyCheckIn } from '@/components/body-checkin';
 import { DeckRow } from '@/components/decks';
 import { LookingBackCard } from '@/components/looking-back';
 import { MonthRing } from '@/components/month-ring';
@@ -26,6 +27,7 @@ import {
   markReflected,
   seasonDeck,
 } from '@/lib/data';
+import { checkInShown } from '@/lib/body';
 import { dayLabel, greetingFor, localMonthStart } from '@/lib/dates';
 import { useSession } from '@/lib/session';
 import { shareCard } from '@/lib/share';
@@ -46,6 +48,7 @@ async function loadHome(seasonId: string | null) {
   return {
     card,
     lookingBack,
+    showCheckIn: checkInShown(),
     reflectedDays,
     todayStatus: card ? await answeredToday(card.id) : null,
     monthly: currentMonthlyDeck(decks),
@@ -143,6 +146,8 @@ export default function Home() {
               )}
             </View>
           ) : null}
+
+          {data.showCheckIn ? <BodyCheckIn /> : null}
 
           {data.lookingBack ? <LookingBackCard item={data.lookingBack} onOpenAnswer={setOpenAnswer} /> : null}
 
