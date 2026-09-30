@@ -24,7 +24,9 @@ const H = 2868;
 export const SHOTS = [
   { file: '1.png', title: 'A few honest questions a day', line: 'Pull a card. Answer in a few minutes, or stay a while.' },
   { file: '2.png', title: 'Only you ever see your answers', line: 'Write it, say it in a voice memo, or add a photo.' },
-  { file: '3.png', title: 'Check in with your body in ten seconds', line: 'Energy, mood, sleep, stress, and anything else you noticed.' },
+  // cropTop: how much to trim from the top, as a share of the screenshot's width
+  // (CSS margins are measured against width), e.g. a clock over scrolled content.
+  { file: '3.png', title: 'Check in with your body in ten seconds', line: 'Energy, mood, sleep, stress, and anything else you noticed.', cropTop: 0.13 },
   { file: '4.png', title: 'See the patterns in how you feel', line: 'Your month, day by day, with what changes before your period.' },
   { file: '5.png', title: 'Understand what your body is telling you', line: 'Two-minute reads, from cortisol to PMOS (formerly PCOS).' },
   { file: '6.png', title: 'Decks for every season of life', line: 'A new deck every month, life seasons, and your body.' },
@@ -32,7 +34,7 @@ export const SHOTS = [
 
 const font = (name) => pathToFileURL(`${root}/assets/fonts/${name}`).href;
 
-const page = ({ title, line }, image) => `<!doctype html>
+const page = ({ title, line, cropTop = 0 }, image) => `<!doctype html>
 <html><head><meta charset="utf-8"><style>
 @font-face { font-family: Ivar; src: url('${font('IvarDisplayCondensed-Medium.otf')}'); }
 @font-face { font-family: Haas; src: url('${font('NHaasGroteskDSPro-55Rg.otf')}'); }
@@ -59,7 +61,7 @@ p { margin: 0; font-size: 50px; line-height: 1.35; color: rgba(254,252,242,0.78)
   <h1>${title}</h1>
   <p>${line}</p>
 </div>
-<div class="phone">${image ? `<img src="${image}">` : '<div class="placeholder">Your screenshot goes here</div>'}</div>
+<div class="phone">${image ? `<img src="${image}" style="margin-top: -${(cropTop * 100).toFixed(2)}%">` : '<div class="placeholder">Your screenshot goes here</div>'}</div>
 </body></html>`;
 
 // A fresh browser profile each run, so no cached page is ever reused.
