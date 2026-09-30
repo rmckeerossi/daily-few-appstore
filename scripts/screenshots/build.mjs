@@ -70,8 +70,10 @@ mkdirSync(rawDir, { recursive: true });
 
 for (const [i, shot] of SHOTS.entries()) {
   rmSync(`${outDir}/${i + 1}.png`, { force: true });
-  const raw = `${rawDir}/${shot.file}`;
-  const image = existsSync(raw) ? pathToFileURL(raw).href : null;
+  // Any common image type from the phone: 1.png, 1.jpg, 1.webp...
+  const base = shot.file.replace(/.png$/, '');
+  const raw = ['png', 'jpg', 'jpeg', 'webp'].map((ext) => `${rawDir}/${base}.${ext}`).find((f) => existsSync(f)) ?? '';
+  const image = raw ? pathToFileURL(raw).href : null;
   const html = `${workDir}/${i + 1}.html`;
   writeFileSync(html, page(shot, image));
   const out = `${outDir}/${i + 1}.png`;
