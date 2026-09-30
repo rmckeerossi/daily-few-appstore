@@ -31,7 +31,10 @@ export default function SignIn() {
     const { error: err } = await supabase.auth.signInWithPassword({ email: REVIEW_EMAIL, password });
     setSending(false);
     // Signed in: the app switches screens on its own.
-    if (err) setError('That password didn’t work.');
+    if (err) {
+      if (__DEV__) console.warn(`review sign-in failed (${err.status} ${err.code}): ${err.message}`);
+      setError('That password didn’t work.');
+    }
   };
 
   const send = async () => {

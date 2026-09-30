@@ -7,7 +7,8 @@
 // Renders with Microsoft Edge in headless mode (already on Windows).
 
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -61,11 +62,14 @@ p { margin: 0; font-size: 50px; line-height: 1.35; color: rgba(254,252,242,0.78)
 <div class="phone">${image ? `<img src="${image}">` : '<div class="placeholder">Your screenshot goes here</div>'}</div>
 </body></html>`;
 
+// A fresh browser profile each run, so no cached page is ever reused.
+const profile = resolve(tmpdir(), `daily-few-shots-${Date.now()}`);
 mkdirSync(outDir, { recursive: true });
 mkdirSync(workDir, { recursive: true });
 mkdirSync(rawDir, { recursive: true });
 
 for (const [i, shot] of SHOTS.entries()) {
+  rmSync(`${outDir}/${i + 1}.png`, { force: true });
   const raw = `${rawDir}/${shot.file}`;
   const image = existsSync(raw) ? pathToFileURL(raw).href : null;
   const html = `${workDir}/${i + 1}.html`;
@@ -73,8 +77,12 @@ for (const [i, shot] of SHOTS.entries()) {
   const out = `${outDir}/${i + 1}.png`;
   execFileSync(EDGE, [
     '--headless=new', '--disable-gpu', '--hide-scrollbars', '--force-device-scale-factor=1',
-    '--allow-file-access-from-files', `--user-data-dir=${resolve(workDir, 'edge-profile')}`,
-    `--window-size=${W},${H}`, `--screenshot=${resolve(out)}`, pathToFileURL(html).href,
+    '--allow-file-access-from-files', `--user-data-dir=${profile}-${i + 1}`,
+    `--window-size=${W},${H}`, `--screenshot=${resolve(out)}`, `${pathToFileURL(html).href}?v=${Date.now()}`,
   ], { stdio: 'ignore' });
+  // Edge hands off to a background process and writes the file a moment later.
+  const sleep = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+  for (let t = 0; t < 60 && !existsSync(out); t++) sleep(500);
+  if (!existsSync(out)) throw new Error(`Edge didn't write ${out}`);
   console.log(`${image ? 'Built' : 'Placeholder'}: screenshots/app-store/${i + 1}.png  "${shot.title}"`);
 }

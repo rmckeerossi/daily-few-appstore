@@ -223,10 +223,9 @@ export function averages(checkIns: CheckIn[]): Record<MetricKey, number | null> 
 /** Words for an average, so the recap reads like a sentence, not a score. */
 export function describe(key: MetricKey, value: number | null): string {
   if (value == null) return 'Not logged';
+  // The same words as the check-in itself, for the month's average.
   const m = METRICS.find((x) => x.key === key)!;
-  if (value <= 2) return m.low;
-  if (value >= 4) return m.high;
-  return 'In between';
+  return m.steps[Math.min(4, Math.max(0, Math.round(value) - 1))];
 }
 
 const MIN_DAYS = 5;

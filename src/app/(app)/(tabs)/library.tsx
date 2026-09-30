@@ -109,7 +109,8 @@ function ReadsList() {
         <View key={shelf.label ?? 'all'} style={{ gap: 12 }}>
           {shelf.label ? <Eyebrow>{shelf.label}</Eyebrow> : null}
           {shelf.reads.map((r) => (
-            <ReadRow key={r.id} read={r} />
+            // Under a shelf heading the topic is already said: just "Short read".
+            <ReadRow key={r.id} read={r} label={shelf.label ? 'Short read' : undefined} />
           ))}
         </View>
       ))}
