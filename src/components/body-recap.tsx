@@ -1,8 +1,11 @@
+import { router } from 'expo-router';
+import { BookOpen } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { averages, describe, findPatterns, getCheckIns, METRICS, type CheckIn } from '@/lib/body';
 import { addDays, localDate, parseLocalDate } from '@/lib/dates';
+import { readsForPatterns, type ReadSummary } from '@/lib/reads';
 import { colors, fonts, radius, type } from '@/theme/tokens';
 
 import { Caption, Eyebrow } from './text';
@@ -16,6 +19,7 @@ const CHART_HEIGHT = 56;
  */
 export function BodyRecap({ month, label }: { month: string; label: string }) {
   const [data, setData] = useState<{ month: CheckIn[]; recent: CheckIn[] } | null>(null);
+  const [reads, setReads] = useState<Record<string, ReadSummary>>({});
 
   useEffect(() => {
     const start = parseLocalDate(`${month}-01`);
@@ -23,7 +27,12 @@ export function BodyRecap({ month, label }: { month: string; label: string }) {
     // Three months back, so cycle patterns have a few cycles to compare.
     const recentFrom = localDate(addDays(start, -62));
     getCheckIns(recentFrom, localDate(end)).then(
-      (recent) => setData({ month: recent.filter((c) => c.day.startsWith(month)), recent }),
+      (recent) => {
+        const monthCheckIns = recent.filter((c) => c.day.startsWith(month));
+        setData({ month: monthCheckIns, recent });
+        const keys = [...new Set(findPatterns(monthCheckIns, recent).map((p) => p.key))];
+        readsForPatterns(keys).then(setReads, () => {});
+      },
       () => setData({ month: [], recent: [] }),
     );
   }, [month]);
@@ -73,8 +82,18 @@ export function BodyRecap({ month, label }: { month: string; label: string }) {
       <View style={{ gap: 10 }}>
         {patterns.length ? (
           patterns.map((p) => (
-            <View key={p} style={styles.pattern}>
-              <Text style={[type.body, { color: colors.textPrimary }]}>{p}</Text>
+            <View key={p.text} style={styles.pattern}>
+              <Text style={[type.body, { color: colors.textPrimary }]}>{p.text}</Text>
+              {reads[p.key] ? (
+                <Pressable
+                  accessibilityRole="link"
+                  hitSlop={8}
+                  onPress={() => router.push({ pathname: '/read/[id]', params: { id: reads[p.key].id } })}
+                  style={styles.why}>
+                  <BookOpen size={14} color={colors.lilac} strokeWidth={1.5} />
+                  <Text style={[type.labelSm, { color: colors.lilac }]}>Why this happens · {reads[p.key].minutes} min</Text>
+                </Pressable>
+              ) : null}
             </View>
           ))
         ) : (
@@ -103,6 +122,7 @@ const styles = StyleSheet.create({
   column: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', gap: 3 },
   bar: { width: '100%', borderRadius: 2, backgroundColor: colors.lilac },
   periodMark: { width: 4, height: 4, borderRadius: 2, backgroundColor: colors.lilac },
+  why: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 },
   pattern: {
     padding: 14,
     borderRadius: radius.row,

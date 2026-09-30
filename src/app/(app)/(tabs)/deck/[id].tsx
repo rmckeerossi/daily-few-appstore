@@ -5,11 +5,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { RoundIconButton } from '@/components/buttons';
 import { artVariant, CategoryRow } from '@/components/decks';
+import { ReadRow } from '@/components/read-row';
 import { DeckArtGradient, NightBackground } from '@/components/gradients';
 import { NAV_CLEARANCE } from '@/components/screen';
 import { LoadError, Loading } from '@/components/status';
 import { BodyLight, Eyebrow } from '@/components/text';
 import { goBack } from '@/lib/nav';
+import { readsForDeck } from '@/lib/reads';
 import { getDeckDetail, type DeckType } from '@/lib/data';
 import { monthName, parseLocalDate } from '@/lib/dates';
 import { useLoad } from '@/lib/use-load';
@@ -25,7 +27,11 @@ const TYPE_LABEL: Record<DeckType, string> = {
 export default function DeckScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
-  const { data, error, reload } = useLoad(() => getDeckDetail(id), id);
+  // Reads are a nice-to-have: never let them stop the deck from loading.
+  const { data, error, reload } = useLoad(
+    async () => ({ ...(await getDeckDetail(id)), reads: await readsForDeck(id).catch(() => []) }),
+    id,
+  );
   const deck = data?.deck?.id === id ? data.deck : null;
 
   const tag = deck?.month ? monthName(parseLocalDate(deck.month)) : null;
@@ -67,6 +73,14 @@ export default function DeckScreen() {
                 <Text style={[type.bodySm, { color: colors.textSecondary, fontFamily: fonts.sansLight }]}>
                   These questions are for reflection, not medical advice.
                 </Text>
+              ) : null}
+              {data.reads.length ? (
+                <View style={{ gap: 10 }}>
+                  <Eyebrow>Read first</Eyebrow>
+                  {data.reads.map((r) => (
+                    <ReadRow key={r.id} read={r} />
+                  ))}
+                </View>
               ) : null}
               <Eyebrow>Choose a category</Eyebrow>
               <View style={{ gap: 10 }}>

@@ -41,6 +41,12 @@ In Supabase, open **Table Editor**, switch the schema dropdown (top left) from `
 
 These are counts and signup details only. None of them read what anyone wrote, recorded or photographed.
 
+## Updating the short reads
+
+1. Edit or add a file in `content/reads/` (one `.md` file per read; the header at the top sets its title, reading time, which decks show it as "Read first", which recap patterns link to it, and whether the clinical advisor has reviewed it).
+2. Run `node scripts/reads/build-seed.mjs`.
+3. Paste `supabase/seed/reads.sql` into the Supabase SQL editor and run it.
+
 ## Updating the questions
 
 1. Edit `design/Daily_Few_Card_Library.xlsx` (Decks and Cards tabs).

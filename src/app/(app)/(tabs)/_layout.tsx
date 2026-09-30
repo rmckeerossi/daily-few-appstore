@@ -16,6 +16,7 @@ export default function TabsLayout() {
       {/* Deck and Draw keep the bottom nav visible but aren't tabs themselves. */}
       <Tabs.Screen name="deck/[id]" options={{ href: null }} />
       <Tabs.Screen name="draw" options={{ href: null }} />
+      <Tabs.Screen name="read/[id]" options={{ href: null }} />
     </Tabs>
   );
 }

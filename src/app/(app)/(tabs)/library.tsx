@@ -1,28 +1,31 @@
 import { router } from 'expo-router';
-import { Layers } from 'lucide-react-native';
+import { BookOpen, Layers } from 'lucide-react-native';
 import { useState } from 'react';
 import { View } from 'react-native';
 
 import { DeckTile } from '@/components/decks';
+import { ReadRow } from '@/components/read-row';
 import { Screen } from '@/components/screen';
 import { Segmented } from '@/components/segmented';
 import { LoadError, Loading } from '@/components/status';
 import { BodyLight, Eyebrow, ScreenTitle } from '@/components/text';
 import { currentMonthlyDeck, getDecks, type DeckType } from '@/lib/data';
+import { getReads } from '@/lib/reads';
 import { useSession } from '@/lib/session';
 import { useLoad } from '@/lib/use-load';
 import { colors } from '@/theme/tokens';
 
-type Filter = 'all' | 'monthly' | 'season' | 'body';
+type Filter = 'all' | 'monthly' | 'season' | 'body' | 'reads';
 
 const FILTERS: { value: Filter; label: string }[] = [
   { value: 'all', label: 'All' },
   { value: 'monthly', label: 'Monthly' },
   { value: 'season', label: 'Seasons' },
   { value: 'body', label: 'Body' },
+  { value: 'reads', label: 'Reads' },
 ];
 
-const matches: Record<Filter, (t: DeckType) => boolean> = {
+const matches: Record<Exclude<Filter, 'reads'>, (t: DeckType) => boolean> = {
   all: () => true,
   monthly: (t) => t === 'monthly' || t === 'library',
   season: (t) => t === 'life_season',
@@ -37,18 +40,20 @@ export default function Library() {
   const featured = decks ? currentMonthlyDeck(decks) : null;
   // This month's deck first, then everything else in library order.
   const shown = (decks ?? [])
-    .filter((d) => matches[filter](d.type))
+    .filter((d) => filter !== 'reads' && matches[filter](d.type))
     .sort((a, b) => Number(b.id === featured?.id) - Number(a.id === featured?.id));
 
   return (
     <Screen withNav gap={24}>
       <View style={{ gap: 12 }}>
         <Eyebrow>Library</Eyebrow>
-        <ScreenTitle>Pick a deck</ScreenTitle>
+        <ScreenTitle>{filter === 'reads' ? 'Understand your body' : 'Pick a deck'}</ScreenTitle>
       </View>
       <Segmented options={FILTERS} value={filter} onChange={setFilter} />
 
-      {error ? (
+      {filter === 'reads' ? (
+        <ReadsList />
+      ) : error ? (
         <LoadError onRetry={reload} />
       ) : !decks ? (
         <Loading />
@@ -80,5 +85,28 @@ export default function Library() {
         </View>
       )}
     </Screen>
+  );
+}
+
+/** Short reads: plain-language explainers, "for understanding, not medical advice". */
+function ReadsList() {
+  const { data: reads, error, reload } = useLoad(getReads);
+  if (error) return <LoadError onRetry={reload} />;
+  if (!reads) return <Loading />;
+  if (reads.length === 0) {
+    return (
+      <View style={{ alignItems: 'center', gap: 12, paddingVertical: 40 }}>
+        <BookOpen size={48} color={colors.textTertiary} strokeWidth={1.5} />
+        <BodyLight style={{ textAlign: 'center' }}>Short reads are on their way.</BodyLight>
+      </View>
+    );
+  }
+  return (
+    <View style={{ gap: 12 }}>
+      <BodyLight>Two-minute reads on what your body might be telling you. For understanding, not medical advice.</BodyLight>
+      {reads.map((r) => (
+        <ReadRow key={r.id} read={r} />
+      ))}
+    </View>
   );
 }

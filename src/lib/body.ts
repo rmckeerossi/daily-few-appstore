@@ -111,8 +111,10 @@ function compare(a: CheckIn[], b: CheckIn[], key: MetricKey) {
  * difference is meaningful and there's enough data. Never advice.
  * `recent` should cover about three months, so cycle patterns have room to show.
  */
-export function findPatterns(month: CheckIn[], recent: CheckIn[]): string[] {
-  const patterns: string[] = [];
+export type Pattern = { text: string; key: 'sleep-mood' | 'stress-cravings' | 'premenstrual' };
+
+export function findPatterns(month: CheckIn[], recent: CheckIn[]): Pattern[] {
+  const patterns: Pattern[] = [];
 
   if (month.length >= MIN_DAYS) {
     // Sleep is rated about last night, so it's compared with the same day's
@@ -120,17 +122,17 @@ export function findPatterns(month: CheckIn[], recent: CheckIn[]): string[] {
     const afterRough = month.filter((c) => c.sleep != null && c.sleep <= 2);
     const afterRested = month.filter((c) => c.sleep != null && c.sleep >= 4);
     const mood = compare(afterRough, afterRested, 'mood');
-    if (mood != null && mood <= -MEANINGFUL) patterns.push('After rough sleep, your mood tended to be lower.');
+    if (mood != null && mood <= -MEANINGFUL) patterns.push({ key: 'sleep-mood', text: 'After rough sleep, your mood tended to be lower.' });
     const energy = compare(afterRough, afterRested, 'energy');
-    if (energy != null && energy <= -MEANINGFUL) patterns.push('After rough sleep, your energy tended to be lower.');
+    if (energy != null && energy <= -MEANINGFUL) patterns.push({ key: 'sleep-mood', text: 'After rough sleep, your energy tended to be lower.' });
 
     // Stress and mood on the same day.
     const stressed = month.filter((c) => (c.stress ?? 0) >= 4);
     const calm = month.filter((c) => c.stress != null && c.stress <= 2);
     const stressMood = compare(stressed, calm, 'mood');
-    if (stressMood != null && stressMood <= -MEANINGFUL) patterns.push('On your most stretched days, your mood dipped too.');
+    if (stressMood != null && stressMood <= -MEANINGFUL) patterns.push({ key: 'stress-cravings', text: 'On your most stretched days, your mood dipped too.' });
     const stressCravings = compare(stressed, calm, 'cravings');
-    if (stressCravings != null && stressCravings >= MEANINGFUL) patterns.push('Your cravings were stronger on high-stress days.');
+    if (stressCravings != null && stressCravings >= MEANINGFUL) patterns.push({ key: 'stress-cravings', text: 'Your cravings were stronger on high-stress days.' });
   }
 
   // The week before a period, across the last few months.
@@ -150,7 +152,7 @@ export function findPatterns(month: CheckIn[], recent: CheckIn[]): string[] {
       if (d == null || Math.abs(d) < MEANINGFUL) continue;
       const word = d > 0 ? phrases[m.key][1] : phrases[m.key][0];
       const verb = m.key === 'cravings' ? 'were' : 'was';
-      patterns.push(`In the week before your period, your ${m.label.toLowerCase()} ${verb} ${word} than usual.`);
+      patterns.push({ key: 'premenstrual', text: `In the week before your period, your ${m.label.toLowerCase()} ${verb} ${word} than usual.` });
     }
   }
 
