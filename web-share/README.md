@@ -6,4 +6,3 @@ iOS opens the app instead (universal link, via `.well-known/apple-app-site-assoc
 
 - `api/c.js` renders the page on the server so text-message previews show the question.
 - Deployed on Vercel from this folder. Set `APP_STORE_URL` once the app is live.
-- Replace `APPLE_TEAM_ID` in `public/.well-known/apple-app-site-association` with the Apple Developer Team ID.

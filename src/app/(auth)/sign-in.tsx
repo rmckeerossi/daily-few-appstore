@@ -10,12 +10,29 @@ import { signInWithApple } from '@/lib/apple';
 import { supabase } from '@/lib/supabase';
 import { colors, type } from '@/theme/tokens';
 
+// App Review can't receive emailed codes, so this one account signs in with a
+// password instead (details go in App Store Connect's review notes). Every
+// other account only ever signs in with a code.
+const REVIEW_EMAIL = 'appreview@dailyfew.com';
+
 /** Returning members: email → code. Never creates an account. */
 export default function SignIn() {
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [sending, setSending] = useState(false);
+
+  const isReviewer = email.trim().toLowerCase() === REVIEW_EMAIL;
+
+  const reviewerSignIn = async () => {
+    setSending(true);
+    setError(null);
+    const { error: err } = await supabase.auth.signInWithPassword({ email: REVIEW_EMAIL, password });
+    setSending(false);
+    // Signed in: the app switches screens on its own.
+    if (err) setError('That password didn’t work.');
+  };
 
   const send = async () => {
     const clean = email.trim().toLowerCase();
@@ -23,6 +40,7 @@ export default function SignIn() {
       setError('That email is missing an @.');
       return;
     }
+    if (clean === REVIEW_EMAIL) return reviewerSignIn();
     setSending(true);
     setError(null);
     setNotFound(false);
@@ -68,16 +86,32 @@ export default function SignIn() {
         autoComplete="email"
         textContentType="emailAddress"
         autoFocus
-        returnKeyType="send"
-        onSubmitEditing={send}
-        error={error}
+        returnKeyType={isReviewer ? 'next' : 'send'}
+        onSubmitEditing={isReviewer ? undefined : send}
+        error={isReviewer ? null : error}
       />
+      {isReviewer ? (
+        <Field
+          label="Password"
+          value={password}
+          onChangeText={(t) => {
+            setPassword(t);
+            setError(null);
+          }}
+          secureTextEntry
+          autoCapitalize="none"
+          textContentType="password"
+          returnKeyType="go"
+          onSubmitEditing={reviewerSignIn}
+          error={error}
+        />
+      ) : null}
       {notFound ? (
         <Text style={[type.bodySm, { color: colors.textSecondary }]}>
           We couldn’t find an account with that email.{' '}
         </Text>
       ) : null}
-      <PrimaryButton label="Email me a code" onPress={send} loading={sending} />
+      <PrimaryButton label={isReviewer ? 'Sign in' : 'Email me a code'} onPress={send} loading={sending} />
       {notFound ? <TextButton label="Start with me instead" onPress={() => router.replace('/name')} /> : null}
     </StepScreen>
   );
