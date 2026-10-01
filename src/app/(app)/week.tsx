@@ -155,9 +155,12 @@ function WeekBody({ digest, name, read, monthlyId, isLatest, onShift, toast }: {
         <View style={styles.box}>
           <Eyebrow>In your words</Eyebrow>
           <Text style={styles.quote}>“{digest.words.text}”</Text>
-          <Caption>
-            {digest.words.day}, answering “{digest.words.question}”
-          </Caption>
+          <Caption>{digest.words.source}</Caption>
+        </View>
+      ) : digest.wordsNote ? (
+        <View style={styles.box}>
+          <Eyebrow>Your week, your way</Eyebrow>
+          <Text style={[type.body, { color: colors.textPrimary }]}>{digest.wordsNote}</Text>
         </View>
       ) : null}
 

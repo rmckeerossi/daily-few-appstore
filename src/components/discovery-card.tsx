@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { BookOpen, Droplet, Moon, Sparkles, Sun, Wind, type LucideIcon } from 'lucide-react-native';
+import { Activity, BookOpen, CalendarDays, Droplet, Moon, Sparkles, Sun, Wind, type LucideIcon } from 'lucide-react-native';
 import { useEffect, useId, useState } from 'react';
 import { AccessibilityInfo, Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, LinearGradient as SvgLinear, RadialGradient, Rect, Stop } from 'react-native-svg';
@@ -8,13 +8,33 @@ import Svg, { Defs, LinearGradient as SvgLinear, RadialGradient, Rect, Stop } fr
 import type { Discovery, DiscoveryTopic } from '@/lib/body';
 import { colors, fonts, type } from '@/theme/tokens';
 
-/** Each topic has its own glow on the burgundy base, so a collection looks varied. */
-const TOPICS: Record<DiscoveryTopic, { label: string; icon: LucideIcon; glow: string; mid: string; dark: string }> = {
-  cycle: { label: 'Your cycle', icon: Droplet, glow: colors.red, mid: '#8A365A', dark: '#3A1526' },
-  'energy-sleep': { label: 'Energy and sleep', icon: Moon, glow: colors.lilac, mid: '#6B6FB0', dark: '#2A1838' },
-  stress: { label: 'Stress', icon: Wind, glow: '#B9CDB4', mid: '#6E7F78', dark: '#2A1A24' },
-  helps: { label: 'What helps you', icon: Sun, glow: '#F2B48C', mid: '#B5626A', dark: '#3A1526' },
+/**
+ * Each topic has its own colours on a dark base, so a collection looks varied:
+ * two glows per topic, and each card's glow comes from a different corner,
+ * picked from its key, so cards of the same topic never look like copies.
+ */
+const TOPICS: Record<DiscoveryTopic, { label: string; icon: LucideIcon; glows: [string, string]; mid: string; dark: string }> = {
+  cycle: { label: 'Your cycle', icon: Droplet, glows: [colors.red, '#F28C9B'], mid: '#8A365A', dark: '#3A1526' },
+  'energy-sleep': { label: 'Energy and sleep', icon: Moon, glows: [colors.lilac, '#A9B4F5'], mid: '#5E5FA0', dark: '#241632' },
+  stress: { label: 'Stress', icon: Wind, glows: ['#B9CDB4', '#9FC3BE'], mid: '#5F7470', dark: '#22181F' },
+  helps: { label: 'What helps you', icon: Sun, glows: ['#F2B48C', '#F6CF8E'], mid: '#B0606A', dark: '#3A1526' },
+  signals: { label: 'Body signals', icon: Activity, glows: ['#E9A3C4', '#D7A6E8'], mid: '#7E3F6E', dark: '#2C1428' },
+  rhythm: { label: 'Your rhythm', icon: CalendarDays, glows: ['#E9C98B', '#EFB27A'], mid: '#8A5A3E', dark: '#2E1A1A' },
 };
+
+const CORNERS = [
+  { cx: '0%', cy: '0%' },
+  { cx: '100%', cy: '0%' },
+  { cx: '100%', cy: '100%' },
+  { cx: '0%', cy: '100%' },
+];
+
+/** A small stable number from a string, so a card always gets the same look. */
+function hash(s: string) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
 
 function useReduceMotion() {
   const [reduce, setReduce] = useState(false);
@@ -26,19 +46,22 @@ function useReduceMotion() {
   return reduce;
 }
 
-function TopicGlow({ topic }: { topic: DiscoveryTopic }) {
+function TopicGlow({ topic, seed }: { topic: DiscoveryTopic; seed: string }) {
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const t = TOPICS[topic];
+  const h = hash(seed);
+  const glow = t.glows[h % 2];
+  const { cx, cy } = CORNERS[Math.floor(h / 2) % CORNERS.length];
   return (
     <Svg style={StyleSheet.absoluteFill} preserveAspectRatio="none">
       <Defs>
-        <SvgLinear id={`l${id}`} x1="0" y1="0" x2="1" y2="1">
+        <SvgLinear id={`l${id}`} x1={cx === '0%' ? '0' : '1'} y1={cy === '0%' ? '0' : '1'} x2={cx === '0%' ? '1' : '0'} y2={cy === '0%' ? '1' : '0'}>
           <Stop offset="0" stopColor={t.mid} />
           <Stop offset="1" stopColor={t.dark} />
         </SvgLinear>
-        <RadialGradient id={`r${id}`} cx="0%" cy="0%" rx="110%" ry="85%" fx="0%" fy="0%">
-          <Stop offset="0" stopColor={t.glow} stopOpacity={0.9} />
-          <Stop offset="1" stopColor={t.glow} stopOpacity={0} />
+        <RadialGradient id={`r${id}`} cx={cx} cy={cy} rx="110%" ry="85%" fx={cx} fy={cy}>
+          <Stop offset="0" stopColor={glow} stopOpacity={0.9} />
+          <Stop offset="1" stopColor={glow} stopOpacity={0} />
         </RadialGradient>
       </Defs>
       <Rect width="100%" height="100%" fill={`url(#l${id})`} />
@@ -108,7 +131,7 @@ export function DiscoveryCard({ discovery, isNew = false, reveal = false }: { di
         disabled={!read}
         onPress={() => read && router.push({ pathname: '/read/[id]', params: { id: read } })}
         style={styles.card}>
-        <TopicGlow topic={discovery.topic} />
+        <TopicGlow topic={discovery.topic} seed={discovery.key} />
         {isNew && !reduceMotion ? <Shimmer /> : null}
         <View style={styles.topRow}>
           <View style={styles.tag}>

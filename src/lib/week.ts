@@ -15,7 +15,7 @@ import {
   type Discovery,
   type MetricKey,
 } from './body';
-import { getAnswers, type AnswerRow } from './data';
+import { getAnswers, getEntries, type AnswerRow, type Entry } from './data';
 import { addDays, localDate, parseLocalDate } from './dates';
 import { supabase } from './supabase';
 
@@ -98,18 +98,21 @@ export async function markDiscoveriesSeen(keys: string[]) {
   } catch {}
 }
 
-const answeredDaysOf = (answers: AnswerRow[]) => new Set(answers.map((a) => a.answered_on));
+/** Days they answered or reflected on a card, or wrote about their day. */
+const reflectedDaysOf = (answers: AnswerRow[], entries: Entry[]) =>
+  new Set([...answers.map((a) => a.answered_on), ...entries.filter((e) => e.body?.trim()).map((e) => e.entry_on)]);
 
 /** Everything they've discovered so far, newest first; unseen ones are marked new. */
 export async function getDiscoveries(): Promise<SavedDiscovery[]> {
   const uid = await userId();
   const today = new Date();
-  const [checkIns, answers] = await Promise.all([
+  const [checkIns, answers, entries] = await Promise.all([
     getCheckIns(localDate(addDays(today, -120)), localDate(today)),
     getAnswers().catch(() => [] as AnswerRow[]),
+    getEntries().catch(() => [] as Entry[]),
   ]);
   const seen = readSeen(uid);
-  return findDiscoveries(checkIns, answeredDaysOf(answers))
+  return findDiscoveries(checkIns, reflectedDaysOf(answers, entries))
     .map((d) => ({ ...d, firstSeen: seen[d.key] ?? null, isNew: !seen[d.key] }))
     .sort((a, b) => Number(b.isNew) - Number(a.isNew) || (b.firstSeen ?? '').localeCompare(a.firstSeen ?? ''));
 }
@@ -126,7 +129,12 @@ export type Digest = {
   quiet: boolean;
   headline: string;
   gentle: boolean;
-  words: { text: string; question: string; day: string } | null;
+  /**
+   * A line of their own words, or, when they only recorded, photographed or
+   * reflected, a short note of that instead. Null when nothing was saved.
+   */
+  words: { text: string; source: string } | null;
+  wordsNote: string | null;
   felt: FeltRow[];
   comparedTo: 'normal' | 'last week' | null;
   symptoms: string | null;
@@ -152,12 +160,39 @@ const LOWER: Record<MetricKey, string> = {
   cravings: 'Quieter',
 };
 
-/** A line of their own words: the first sentence of something they wrote. */
-function firstLine(body: string): string {
-  const text = body.trim().replace(/\s+/g, ' ');
-  const sentence = /^.+?[.!?](\s|$)/.exec(text)?.[0].trim() ?? text;
-  if (sentence.length <= 160) return sentence;
-  return `${sentence.slice(0, 157).replace(/\s+\S*$/, '')}…`;
+/**
+ * The best line of their own words from the week. Every sentence they wrote
+ * (answers and "write about today") is a candidate; a good one is 25 to 140
+ * characters, not a question, and sounds like them ("I", "my", "me"). Longer
+ * writing is trimmed at a word with "…". Ties go to the most recent.
+ */
+function bestLine(texts: { body: string; source: string; at: string }[]): { text: string; source: string } | null {
+  type Candidate = { text: string; source: string; at: string; score: number };
+  const candidates: Candidate[] = [];
+  for (const t of texts) {
+    const sentences = t.body.replace(/\s+/g, ' ').trim().match(/[^.!?]+[.!?]*/g) ?? [];
+    for (const raw of sentences) {
+      const text = raw.trim();
+      if (text.length < 12 || text.endsWith('?')) continue;
+      let score = 0;
+      if (text.length >= 25 && text.length <= 140) score += 3;
+      if (text.length >= 40 && text.length <= 110) score += 1;
+      if (/\b(I|I'm|I’m|my|me|myself)\b/i.test(text)) score += 2;
+      candidates.push({ text, source: t.source, at: t.at, score });
+    }
+  }
+  if (candidates.length === 0) {
+    // Only very short writing: use the longest piece as it is.
+    const longest = texts.map((t) => ({ ...t, body: t.body.trim() })).sort((a, b) => b.body.length - a.body.length)[0];
+    return longest ? { text: trim(longest.body), source: longest.source } : null;
+  }
+  candidates.sort((a, b) => b.score - a.score || b.at.localeCompare(a.at));
+  return { text: trim(candidates[0].text), source: candidates[0].source };
+}
+
+function trim(text: string): string {
+  if (text.length <= 160) return text;
+  return `${text.slice(0, 157).replace(/\s+\S*$/, '')}…`;
 }
 
 const inRange = (day: string, from: string, to: string) => day >= from && day <= to;
@@ -166,9 +201,10 @@ export async function getDigest(weekStart: string): Promise<Digest> {
   const start = parseLocalDate(weekStart);
   const weekEnd = localDate(addDays(start, 6));
   const nextWeek = localDate(addDays(start, 7));
-  const [checkIns, answers, lastIntention, nextIntention, discoveries] = await Promise.all([
+  const [checkIns, answers, entries, lastIntention, nextIntention, discoveries] = await Promise.all([
     getCheckIns(localDate(addDays(start, -35)), weekEnd),
     getAnswers().catch(() => [] as AnswerRow[]),
+    getEntries().catch(() => [] as Entry[]),
     getIntention(weekStart).catch(() => null),
     getIntention(nextWeek).catch(() => null),
     getDiscoveries().catch(() => [] as SavedDiscovery[]),
@@ -178,7 +214,8 @@ export async function getDigest(weekStart: string): Promise<Digest> {
   const lastWeek = checkIns.filter((c) => inRange(c.day, localDate(addDays(start, -7)), localDate(addDays(start, -1))));
   const normal = checkIns.filter((c) => inRange(c.day, localDate(addDays(start, -28)), localDate(addDays(start, -1))));
   const weekAnswers = answers.filter((a) => inRange(a.answered_on, weekStart, weekEnd));
-  const quiet = week.length === 0 && weekAnswers.length === 0;
+  const weekEntries = entries.filter((e) => inRange(e.entry_on, weekStart, weekEnd));
+  const quiet = week.length === 0 && weekAnswers.length === 0 && weekEntries.length === 0;
 
   // Compare with their own normal once there's a month of it; until then, last week.
   const count = (list: CheckIn[], key: MetricKey) => list.filter((c) => c[key] != null).length;
@@ -220,17 +257,35 @@ export async function getDigest(weekStart: string): Promise<Digest> {
     gentle = true;
   }
 
-  const written = weekAnswers.filter((a) => a.body?.trim()).sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
-  const words = written
-    ? {
-        text: firstLine(written.body!),
-        question: written.question_text,
-        day: parseLocalDate(written.answered_on).toLocaleDateString('en-US', { weekday: 'long' }),
-      }
-    : null;
+  const weekday = (d: string) => parseLocalDate(d).toLocaleDateString('en-US', { weekday: 'long' });
+  const words = bestLine([
+    ...weekAnswers
+      .filter((a) => a.body?.trim())
+      .map((a) => ({ body: a.body!, source: `${weekday(a.answered_on)}, answering “${a.question_text}”`, at: a.created_at })),
+    ...weekEntries
+      .filter((e) => e.body?.trim())
+      .map((e) => ({
+        body: e.body!,
+        source: `${weekday(e.entry_on)}, ${e.kind === 'moment' ? 'about a moment you saved' : 'writing about your day'}`,
+        at: e.created_at,
+      })),
+  ]);
+  // Nothing written, but they still showed up: say so instead.
+  const voice = weekAnswers.filter((a) => a.voice_path).length;
+  const photos = weekAnswers.reduce((n, a) => n + a.photo_paths.length, 0) + weekEntries.reduce((n, e) => n + e.photo_paths.length, 0);
+  const reflectedOnly = weekAnswers.filter((a) => a.reflected && !a.body?.trim() && !a.voice_path && a.photo_paths.length === 0).length;
+  const parts = [
+    voice ? `recorded ${voice === 1 ? 'a voice memo' : `${voice} voice memos`}` : null,
+    photos ? `saved ${photos === 1 ? 'a photo' : `${photos} photos`}` : null,
+    reflectedOnly ? `sat with ${reflectedOnly === 1 ? 'a question' : `${reflectedOnly} questions`} in your head` : null,
+  ].filter(Boolean) as string[];
+  const wordsNote =
+    !words && parts.length
+      ? `This week you ${parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}` : parts[0]}.`
+      : null;
 
   // What helped: the strongest "what helps you" from the last few weeks.
-  const helped = findDiscoveries(checkIns, answeredDaysOf(answers)).find((d) => d.topic === 'helps') ?? null;
+  const helped = findDiscoveries(checkIns, reflectedDaysOf(answers, entries)).find((d) => d.topic === 'helps') ?? null;
 
   // One next step: a read that fits the week.
   const newWithRead = discoveries.find((d) => d.isNew && d.read);
@@ -248,6 +303,7 @@ export async function getDigest(weekStart: string): Promise<Digest> {
     headline,
     gentle,
     words,
+    wordsNote,
     felt,
     comparedTo,
     symptoms,

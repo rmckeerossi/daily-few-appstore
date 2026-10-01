@@ -58,6 +58,18 @@ export default function Discoveries() {
           ))}
         </View>
       )}
+
+      {data ? (
+        <View style={styles.how}>
+          <Eyebrow>How discoveries work</Eyebrow>
+          <Caption>
+            Each one comes only from your own check-ins over the last few months. A rough night means you rated sleep
+            Rough or Restless; a stretched day means stress was High or Stretched. A discovery appears once the
+            difference is clear across several days, and cycle ones need at least two cycles. They update as you keep
+            checking in, and they’re worked out on your phone.
+          </Caption>
+        </View>
+      ) : null}
     </Screen>
   );
 }
@@ -65,4 +77,5 @@ export default function Discoveries() {
 const styles = StyleSheet.create({
   topBar: { flexDirection: 'row' },
   empty: { alignItems: 'center', gap: 14, paddingVertical: 40 },
+  how: { gap: 8, marginTop: 8 },
 });

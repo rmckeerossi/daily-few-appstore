@@ -309,11 +309,23 @@ export function findPatterns(month: CheckIn[], recent: CheckIn[]): Pattern[] {
 // ---------------------------------------------------------------------------
 // Discoveries: lasting things someone has learned about their body, from their
 // own check-ins. Worked out on the phone (some come from period days, which
-// never leave it). Stricter than the monthly patterns: they need more data,
-// and they include what helps, not only what's hard.
+// never leave it). Stricter than the monthly patterns: each needs enough days
+// on both sides of the comparison, and they include what helps, not only
+// what's hard. They never diagnose: they describe what her own data shows.
+//
+// What counts as what (all from the check-in's 1 to 5 taps):
+//   rough night    Sleep 1 (Rough) or 2 (Restless)
+//   rested night   Sleep 4 (Good) or 5 (Rested)
+//   stretched day  Stress 4 (High) or 5 (Stretched)
+//   calm day       Stress 1 (Calm) or 2 (Mostly calm)
+//   low/high day   Energy or mood 1-2 / 4-5
+//   week before    the 7 days before each period start (period days are on the phone)
+// A difference counts when the averages differ by at least 0.7 on the 1 to 5
+// scale (0.5 for the gentler "what helps" ones), or a symptom is at least 25
+// points more likely, with at least 3 days on each side.
 // ---------------------------------------------------------------------------
 
-export type DiscoveryTopic = 'cycle' | 'energy-sleep' | 'stress' | 'helps';
+export type DiscoveryTopic = 'cycle' | 'energy-sleep' | 'stress' | 'helps' | 'signals' | 'rhythm';
 
 export type Discovery = {
   key: string;
@@ -333,16 +345,25 @@ const SYMPTOM_PHRASE: Record<SymptomKey, string> = {
   skin: 'Breakouts tend',
 };
 
+const WEEKDAYS = ['Sundays', 'Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays'];
+
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+const has = (list: CheckIn[], key: MetricKey) => list.filter((c) => c[key] != null).length;
+/** Share of these days that had the symptom. */
+const rate = (list: CheckIn[], s: SymptomKey) => (list.length ? list.filter((c) => c.symptoms.includes(s)).length / list.length : 0);
 
-/** `answeredDays`: days they answered or reflected on a card ("YYYY-MM-DD"). */
-export function findDiscoveries(checkIns: CheckIn[], answeredDays: Set<string> = new Set()): Discovery[] {
+/**
+ * Everything her check-ins clearly show. `reflectedDays`: days she answered a
+ * card or wrote about her day ("YYYY-MM-DD").
+ */
+export function findDiscoveries(checkIns: CheckIn[], reflectedDays: Set<string> = new Set()): Discovery[] {
   const out: Discovery[] = [];
-  const has = (list: CheckIn[], key: MetricKey) => list.filter((c) => c[key] != null).length;
+  const rated = checkIns.filter((c) => METRICS.some((m) => c[m.key] != null) || c.symptoms.length > 0);
 
-  // Sleep
-  const rough = checkIns.filter((c) => c.sleep != null && c.sleep <= 2);
-  const rested = checkIns.filter((c) => c.sleep != null && c.sleep >= 4);
+  // --- Sleep -----------------------------------------------------------------
+  const rough = rated.filter((c) => c.sleep != null && c.sleep <= 2);
+  const rested = rated.filter((c) => c.sleep != null && c.sleep >= 4);
+  const notRough = rated.filter((c) => c.sleep != null && c.sleep >= 3);
   if (rough.length >= 3 && rested.length >= 3) {
     const mood = compare(rough, rested, 'mood');
     if (mood != null && mood <= -MEANINGFUL) {
@@ -352,11 +373,23 @@ export function findDiscoveries(checkIns: CheckIn[], answeredDays: Set<string> =
     if (energy != null && energy >= MEANINGFUL) {
       out.push({ key: 'helps-rest', topic: 'helps', text: 'Your best-energy days come after a well-rested night.', evidence: `Seen across ${plural(rested.length, 'rested night')}`, read: null });
     }
+    const cravings = compare(rough, rested, 'cravings');
+    if (cravings != null && cravings >= MEANINGFUL) {
+      out.push({ key: 'sleep-cravings', topic: 'energy-sleep', text: 'After a rough night, your cravings run stronger.', evidence: `Seen across ${plural(rough.length, 'rough night')}`, read: 'whats-behind-a-craving' });
+    }
+  }
+  if (rough.length >= 3 && notRough.length >= 3) {
+    for (const s of SYMPTOMS) {
+      const days = rated.filter((c) => c.symptoms.includes(s.key)).length;
+      if (days >= 3 && rate(rough, s.key) - rate(notRough, s.key) >= 0.25) {
+        out.push({ key: `sleep-symptom-${s.key}`, topic: 'energy-sleep', text: `${SYMPTOM_PHRASE[s.key]} to show up after a rough night.`, evidence: `${plural(rough.filter((c) => c.symptoms.includes(s.key)).length, 'time')} after ${plural(rough.length, 'rough night')}`, read: s.read ?? 'sleep-and-mood' });
+      }
+    }
   }
 
-  // Stress
-  const stretched = checkIns.filter((c) => (c.stress ?? 0) >= 4);
-  const calm = checkIns.filter((c) => c.stress != null && c.stress <= 2);
+  // --- Stress ----------------------------------------------------------------
+  const stretched = rated.filter((c) => (c.stress ?? 0) >= 4);
+  const calm = rated.filter((c) => c.stress != null && c.stress <= 2);
   if (stretched.length >= 3 && calm.length >= 3) {
     const mood = compare(calm, stretched, 'mood');
     if (mood != null && mood >= MEANINGFUL) {
@@ -366,46 +399,99 @@ export function findDiscoveries(checkIns: CheckIn[], answeredDays: Set<string> =
     if (cravings != null && cravings >= MEANINGFUL) {
       out.push({ key: 'stress-cravings', topic: 'stress', text: 'Your cravings are stronger on your most stretched days.', evidence: `Seen across ${plural(stretched.length, 'stretched day')}`, read: 'stress-and-cravings' });
     }
-  }
-
-  // Reflecting
-  const reflected = checkIns.filter((c) => answeredDays.has(c.day));
-  const notReflected = checkIns.filter((c) => !answeredDays.has(c.day));
-  if (has(reflected, 'mood') >= 3 && has(notReflected, 'mood') >= 3) {
-    const mood = compare(reflected, notReflected, 'mood');
-    if (mood != null && mood >= 0.5) {
-      out.push({ key: 'helps-reflect', topic: 'helps', text: 'You tend to feel brighter on days you take a few minutes to reflect.', evidence: `Seen across ${plural(reflected.length, 'day')} you answered a card`, read: null });
+    const sleep = compare(stretched, calm, 'sleep');
+    if (sleep != null && sleep <= -MEANINGFUL) {
+      out.push({ key: 'stress-sleep', topic: 'stress', text: 'Your sleep tends to suffer on your most stretched days.', evidence: `Seen across ${plural(stretched.length, 'stretched day')}`, read: 'waking-at-3am' });
+    }
+    const notStretched = rated.filter((c) => c.stress != null && c.stress <= 3);
+    for (const s of SYMPTOMS) {
+      const days = rated.filter((c) => c.symptoms.includes(s.key)).length;
+      if (days >= 3 && rate(stretched, s.key) - rate(notStretched, s.key) >= 0.25) {
+        out.push({ key: `stress-symptom-${s.key}`, topic: 'stress', text: `${SYMPTOM_PHRASE[s.key]} to show up on your most stretched days.`, evidence: `${plural(stretched.filter((c) => c.symptoms.includes(s.key)).length, 'time')} on ${plural(stretched.length, 'stretched day')}`, read: s.read ?? 'stress-and-your-cycle' });
+      }
     }
   }
 
-  // Cycle: only with at least two cycles of check-ins to compare.
+  // --- Energy and mood together ----------------------------------------------
+  const lowEnergy = rated.filter((c) => c.energy != null && c.energy <= 2);
+  const highEnergy = rated.filter((c) => c.energy != null && c.energy >= 4);
+  if (lowEnergy.length >= 3 && highEnergy.length >= 3) {
+    const mood = compare(lowEnergy, highEnergy, 'mood');
+    if (mood != null && mood <= -1) {
+      out.push({ key: 'energy-mood', topic: 'signals', text: 'When your energy runs low, your mood tends to follow.', evidence: `Seen across ${plural(lowEnergy.length, 'low-energy day')}`, read: 'wired-but-tired' });
+    }
+  }
+
+  // --- Reflecting --------------------------------------------------------------
+  const reflected = rated.filter((c) => reflectedDays.has(c.day));
+  const notReflected = rated.filter((c) => !reflectedDays.has(c.day));
+  if (has(reflected, 'mood') >= 3 && has(notReflected, 'mood') >= 3) {
+    const mood = compare(reflected, notReflected, 'mood');
+    if (mood != null && mood >= 0.5) {
+      out.push({ key: 'helps-reflect', topic: 'helps', text: 'You tend to feel brighter on days you take a few minutes to reflect.', evidence: `Seen across ${plural(reflected.length, 'day')} you answered or wrote`, read: null });
+    }
+  }
+
+  // --- Weekly rhythm (needs about four weeks) ---------------------------------
+  if (rated.length >= 20) {
+    const best: Record<string, string[]> = {};
+    const worst: Record<string, string[]> = {};
+    for (const key of ['energy', 'mood'] as const) {
+      const overall = avg(rated.map((c) => c[key]).filter((v): v is number => v != null));
+      if (overall == null) continue;
+      const scored = WEEKDAYS.map((_, i) => {
+        const days = rated.filter((c) => c[key] != null && parseLocalDate(c.day).getDay() === i);
+        return { i, n: days.length, v: avg(days.map((c) => c[key] as number)) };
+      }).filter((d) => d.n >= 3 && d.v != null) as { i: number; n: number; v: number }[];
+      if (scored.length < 4) continue;
+      const top = scored.reduce((a, b) => (b.v > a.v ? b : a));
+      const low = scored.reduce((a, b) => (b.v < a.v ? b : a));
+      if (top.v - overall >= 0.6) (best[WEEKDAYS[top.i]] ??= []).push(key);
+      if (overall - low.v >= 0.6) (worst[WEEKDAYS[low.i]] ??= []).push(key);
+    }
+    const what = (keys: string[]) => (keys.length === 2 ? 'energy and mood' : keys[0]);
+    for (const [day, keys] of Object.entries(best)) {
+      out.push({ key: 'rhythm-best', topic: 'rhythm', text: `Your ${what(keys)} tend${keys.length === 2 ? '' : 's'} to be at ${keys.length === 2 ? 'their' : 'its'} best on ${day}.`, evidence: 'Across the last few weeks of check-ins', read: null });
+    }
+    for (const [day, keys] of Object.entries(worst)) {
+      out.push({ key: 'rhythm-low', topic: 'rhythm', text: `${day} tend to be your lowest day for ${what(keys)}.`, evidence: 'Across the last few weeks of check-ins', read: keys.includes('energy') ? 'the-afternoon-crash' : null });
+    }
+  }
+
+  // --- Cycle: only with at least two cycles of check-ins to compare ------------
   const pre = premenstrualDays(checkIns);
   const periodDays = new Set(checkIns.filter((c) => c.period).map((c) => c.day));
-  const cycles = [...periodDays].filter((d) => !periodDays.has(localDate(addDays(parseLocalDate(d), -1)))).length;
+  const starts = [...periodDays].filter((d) => !periodDays.has(localDate(addDays(parseLocalDate(d), -1))));
+  const cycles = starts.length;
   if (cycles >= 2) {
-    const inWeek = checkIns.filter((c) => pre.has(c.day));
-    const rest = checkIns.filter((c) => !pre.has(c.day) && !c.period);
+    const inWeek = rated.filter((c) => pre.has(c.day));
+    const rest = rated.filter((c) => !pre.has(c.day) && !c.period);
     const phrases: Record<MetricKey, [string, string]> = {
       energy: ['runs lower', 'runs higher'],
-      mood: ['tends to dip', 'tends to lift'],
-      sleep: ['tends to be rougher', 'tends to be better'],
-      stress: ['tends to ease', 'tends to run higher'],
-      cravings: ['tend to quiet down', 'tend to get stronger'],
+      mood: ['dips', 'lifts'],
+      sleep: ['is rougher', 'is better'],
+      stress: ['eases', 'runs higher'],
+      cravings: ['quiet down', 'get stronger'],
     };
+    const shifts: string[] = [];
     for (const m of METRICS) {
       if (has(inWeek, m.key) < 3) continue;
       const d = compare(inWeek, rest, m.key);
       if (d == null || Math.abs(d) < MEANINGFUL) continue;
+      shifts.push(`your ${m.label.toLowerCase()} ${phrases[m.key][d > 0 ? 1 : 0]}`);
+    }
+    if (shifts.length) {
+      const list = shifts.length === 1 ? shifts[0] : `${shifts.slice(0, -1).join(', ')} and ${shifts[shifts.length - 1]}`;
       out.push({
-        key: `pre-${m.key}`,
+        key: 'pre-week',
         topic: 'cycle',
-        text: `In the week before your period, your ${m.label.toLowerCase()} ${phrases[m.key][d > 0 ? 1 : 0]}.`,
+        text: `In the week before your period, ${list}.`,
         evidence: `Across ${plural(cycles, 'cycle')} of check-ins`,
         read: 'the-week-before-your-period',
       });
     }
     for (const s of SYMPTOMS) {
-      const days = checkIns.filter((c) => c.symptoms.includes(s.key));
+      const days = rated.filter((c) => c.symptoms.includes(s.key));
       const before = days.filter((c) => pre.has(c.day)).length;
       if (days.length < 3 || before / days.length < 0.6) continue;
       out.push({
@@ -415,6 +501,20 @@ export function findDiscoveries(checkIns: CheckIn[], answeredDays: Set<string> =
         evidence: `${before} of ${days.length} times, across ${plural(cycles, 'cycle')}`,
         read: s.read ?? 'the-week-before-your-period',
       });
+    }
+    // The good news side: energy coming back once a period is over.
+    const after = new Set<string>();
+    for (const s of starts) {
+      let end = parseLocalDate(s);
+      while (periodDays.has(localDate(addDays(end, 1)))) end = addDays(end, 1);
+      for (let i = 1; i <= 5; i++) after.add(localDate(addDays(end, i)));
+    }
+    const afterDays = rated.filter((c) => after.has(c.day));
+    if (has(afterDays, 'energy') >= 3 && has(inWeek, 'energy') >= 3) {
+      const lift = compare(afterDays, inWeek, 'energy');
+      if (lift != null && lift >= MEANINGFUL) {
+        out.push({ key: 'cycle-after', topic: 'cycle', text: 'Your energy picks back up in the days after your period.', evidence: `Across ${plural(cycles, 'cycle')} of check-ins`, read: 'what-counts-as-a-regular-cycle' });
+      }
     }
   }
 
