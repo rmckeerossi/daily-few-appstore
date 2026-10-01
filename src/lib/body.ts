@@ -78,7 +78,7 @@ const SELECT = 'day, energy, mood, sleep, stress, cravings, symptoms';
 // Period days: kept on this phone only, never sent to the server.
 // ---------------------------------------------------------------------------
 
-async function userId(): Promise<string> {
+export async function userId(): Promise<string> {
   const { data } = await supabase.auth.getSession();
   const id = data.session?.user.id;
   if (!id) throw new Error('Not signed in');
@@ -304,4 +304,119 @@ export function findPatterns(month: CheckIn[], recent: CheckIn[]): Pattern[] {
   }
 
   return patterns;
+}
+
+// ---------------------------------------------------------------------------
+// Discoveries: lasting things someone has learned about their body, from their
+// own check-ins. Worked out on the phone (some come from period days, which
+// never leave it). Stricter than the monthly patterns: they need more data,
+// and they include what helps, not only what's hard.
+// ---------------------------------------------------------------------------
+
+export type DiscoveryTopic = 'cycle' | 'energy-sleep' | 'stress' | 'helps';
+
+export type Discovery = {
+  key: string;
+  topic: DiscoveryTopic;
+  text: string;
+  evidence: string;
+  read: string | null;
+};
+
+const SYMPTOM_PHRASE: Record<SymptomKey, string> = {
+  headache: 'Headaches tend',
+  bloating: 'Bloating tends',
+  aches: 'Aches and cramps tend',
+  'brain-fog': 'Brain fog tends',
+  anxious: 'Feeling anxious tends',
+  'hot-flashes': 'Hot flashes and night sweats tend',
+  skin: 'Breakouts tend',
+};
+
+const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+
+/** `answeredDays`: days they answered or reflected on a card ("YYYY-MM-DD"). */
+export function findDiscoveries(checkIns: CheckIn[], answeredDays: Set<string> = new Set()): Discovery[] {
+  const out: Discovery[] = [];
+  const has = (list: CheckIn[], key: MetricKey) => list.filter((c) => c[key] != null).length;
+
+  // Sleep
+  const rough = checkIns.filter((c) => c.sleep != null && c.sleep <= 2);
+  const rested = checkIns.filter((c) => c.sleep != null && c.sleep >= 4);
+  if (rough.length >= 3 && rested.length >= 3) {
+    const mood = compare(rough, rested, 'mood');
+    if (mood != null && mood <= -MEANINGFUL) {
+      out.push({ key: 'sleep-mood', topic: 'energy-sleep', text: 'After a rough night, your mood tends to dip.', evidence: `Seen across ${plural(rough.length, 'rough night')}`, read: 'sleep-and-mood' });
+    }
+    const energy = compare(rested, rough, 'energy');
+    if (energy != null && energy >= MEANINGFUL) {
+      out.push({ key: 'helps-rest', topic: 'helps', text: 'Your best-energy days come after a well-rested night.', evidence: `Seen across ${plural(rested.length, 'rested night')}`, read: null });
+    }
+  }
+
+  // Stress
+  const stretched = checkIns.filter((c) => (c.stress ?? 0) >= 4);
+  const calm = checkIns.filter((c) => c.stress != null && c.stress <= 2);
+  if (stretched.length >= 3 && calm.length >= 3) {
+    const mood = compare(calm, stretched, 'mood');
+    if (mood != null && mood >= MEANINGFUL) {
+      out.push({ key: 'helps-calm', topic: 'helps', text: 'Your mood is brightest on your calmer days.', evidence: `Seen across ${plural(calm.length, 'calm day')}`, read: null });
+    }
+    const cravings = compare(stretched, calm, 'cravings');
+    if (cravings != null && cravings >= MEANINGFUL) {
+      out.push({ key: 'stress-cravings', topic: 'stress', text: 'Your cravings are stronger on your most stretched days.', evidence: `Seen across ${plural(stretched.length, 'stretched day')}`, read: 'stress-and-cravings' });
+    }
+  }
+
+  // Reflecting
+  const reflected = checkIns.filter((c) => answeredDays.has(c.day));
+  const notReflected = checkIns.filter((c) => !answeredDays.has(c.day));
+  if (has(reflected, 'mood') >= 3 && has(notReflected, 'mood') >= 3) {
+    const mood = compare(reflected, notReflected, 'mood');
+    if (mood != null && mood >= 0.5) {
+      out.push({ key: 'helps-reflect', topic: 'helps', text: 'You tend to feel brighter on days you take a few minutes to reflect.', evidence: `Seen across ${plural(reflected.length, 'day')} you answered a card`, read: null });
+    }
+  }
+
+  // Cycle: only with at least two cycles of check-ins to compare.
+  const pre = premenstrualDays(checkIns);
+  const periodDays = new Set(checkIns.filter((c) => c.period).map((c) => c.day));
+  const cycles = [...periodDays].filter((d) => !periodDays.has(localDate(addDays(parseLocalDate(d), -1)))).length;
+  if (cycles >= 2) {
+    const inWeek = checkIns.filter((c) => pre.has(c.day));
+    const rest = checkIns.filter((c) => !pre.has(c.day) && !c.period);
+    const phrases: Record<MetricKey, [string, string]> = {
+      energy: ['runs lower', 'runs higher'],
+      mood: ['tends to dip', 'tends to lift'],
+      sleep: ['tends to be rougher', 'tends to be better'],
+      stress: ['tends to ease', 'tends to run higher'],
+      cravings: ['tend to quiet down', 'tend to get stronger'],
+    };
+    for (const m of METRICS) {
+      if (has(inWeek, m.key) < 3) continue;
+      const d = compare(inWeek, rest, m.key);
+      if (d == null || Math.abs(d) < MEANINGFUL) continue;
+      out.push({
+        key: `pre-${m.key}`,
+        topic: 'cycle',
+        text: `In the week before your period, your ${m.label.toLowerCase()} ${phrases[m.key][d > 0 ? 1 : 0]}.`,
+        evidence: `Across ${plural(cycles, 'cycle')} of check-ins`,
+        read: 'the-week-before-your-period',
+      });
+    }
+    for (const s of SYMPTOMS) {
+      const days = checkIns.filter((c) => c.symptoms.includes(s.key));
+      const before = days.filter((c) => pre.has(c.day)).length;
+      if (days.length < 3 || before / days.length < 0.6) continue;
+      out.push({
+        key: `pre-symptom-${s.key}`,
+        topic: 'cycle',
+        text: `${SYMPTOM_PHRASE[s.key]} to show up the week before your period.`,
+        evidence: `${before} of ${days.length} times, across ${plural(cycles, 'cycle')}`,
+        read: s.read ?? 'the-week-before-your-period',
+      });
+    }
+  }
+
+  return out;
 }

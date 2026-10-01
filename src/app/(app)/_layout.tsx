@@ -64,6 +64,8 @@ export default function AppLayout() {
       <Stack.Screen name="answer" options={{ presentation: 'fullScreenModal', gestureEnabled: false }} />
       <Stack.Screen name="entry" options={{ presentation: 'fullScreenModal', gestureEnabled: false }} />
       <Stack.Screen name="recap" />
+      <Stack.Screen name="week" />
+      <Stack.Screen name="discoveries" />
     </Stack>
   );
 }

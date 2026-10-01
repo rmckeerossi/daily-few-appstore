@@ -1,5 +1,6 @@
+import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { LogOut, Pencil, Shield, Trash2 } from 'lucide-react-native';
+import { LogOut, Pencil, Shield, Sparkles, Trash2 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Alert, Linking, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -24,7 +25,14 @@ import { checkInShown, setCheckInShown } from '@/lib/body';
 import { crashReportingEnabled, Sentry } from '@/lib/crash-reporting';
 import { lockEnabled, lockMethod, setLockEnabled, unlock, type LockMethod } from '@/lib/app-lock';
 import { timeZone } from '@/lib/dates';
-import { anniversariesEnabled, askForNotifications, setAnniversariesEnabled, syncReminders } from '@/lib/notifications';
+import {
+  anniversariesEnabled,
+  askForNotifications,
+  setAnniversariesEnabled,
+  setWeeklyDigestEnabled,
+  syncReminders,
+  weeklyDigestEnabled,
+} from '@/lib/notifications';
 import { SHARE_HOST } from '@/lib/links';
 import { useSession } from '@/lib/session';
 import { colors, fonts, radius, type } from '@/theme/tokens';
@@ -58,6 +66,7 @@ export default function Profile() {
   const [locked, setLocked] = useState(lockEnabled);
   const [anniversaries, setAnniversaries] = useState(anniversariesEnabled);
   const [bodyCheckIn, setBodyCheckIn] = useState(checkInShown);
+  const [weeklyDigest, setWeeklyDigest] = useState(weeklyDigestEnabled);
   const [method, setMethod] = useState<LockMethod>(null);
   const lockLabel = method === 'Face ID' || method === 'Touch ID' ? `Lock with ${method}` : 'Lock with passcode';
 
@@ -230,6 +239,21 @@ export default function Profile() {
             setBodyCheckIn(on);
           }}
         />
+        <ToggleRow
+          label="Weekly digest"
+          description="Sunday evening: your week at a glance, what helped, and one thing to carry forward."
+          value={weeklyDigest}
+          onChange={async (on) => {
+            if (on && !(await askForNotifications())) return;
+            setWeeklyDigestEnabled(on);
+            setWeeklyDigest(on);
+            syncReminders(profile);
+          }}
+        />
+        <Pressable accessibilityRole="link" onPress={() => router.push('/discoveries')} style={styles.accountRow}>
+          <Text style={[type.body, { color: colors.textPrimary, fontSize: 17 }]}>What I know about my body</Text>
+          <Sparkles size={20} color={colors.textPrimary} strokeWidth={1.5} />
+        </Pressable>
       </View>
 
       <View>

@@ -31,6 +31,42 @@ const ANNIVERSARY_DAYS_AHEAD = 30;
 const ANNIVERSARY_MAX = 20;
 const ANNIVERSARY_KEY = 'anniversaries';
 
+//   Weekly digest    Sundays at 18:00: "Your week is ready." → opens the digest.
+//                    Nothing personal on the lock screen. On by default.
+//   Intention        once, on the Wednesday of the week they set one, at 9:30.
+//                    Scheduled when they save it, not by syncReminders.
+const DIGEST_ID = 'weekly-digest';
+const DIGEST_KEY = 'weekly-digest-off';
+const INTENTION_PREFIX = 'intention-';
+
+export function weeklyDigestEnabled(): boolean {
+  try {
+    return localStorage.getItem(DIGEST_KEY) !== '1';
+  } catch {
+    return true;
+  }
+}
+
+export function setWeeklyDigestEnabled(on: boolean) {
+  try {
+    if (on) localStorage.removeItem(DIGEST_KEY);
+    else localStorage.setItem(DIGEST_KEY, '1');
+  } catch {}
+}
+
+/** One gentle reminder of this week's intention, on its Wednesday morning. */
+export async function scheduleIntentionReminder(weekStart: string) {
+  if (!(await notificationsAllowed())) return;
+  const [y, m, d] = weekStart.split('-').map(Number);
+  const when = new Date(y, m - 1, d + 2, 9, 30, 0);
+  if (when <= new Date()) return;
+  await Notifications.scheduleNotificationAsync({
+    identifier: `${INTENTION_PREFIX}${weekStart}`,
+    content: { title: 'Daily Few', body: 'A small reminder of what you wanted this week.', data: { url: '/week' } },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: when },
+  });
+}
+
 /** A setting on this phone, like the app lock. */
 export function anniversariesEnabled(): boolean {
   try {
@@ -109,6 +145,7 @@ export async function syncReminders(profile: Profile | null) {
       .filter(
         (n) =>
           n.identifier === DAILY_ID ||
+          n.identifier === DIGEST_ID ||
           n.identifier.startsWith(RECAP_PREFIX) ||
           n.identifier.startsWith(ANNIVERSARY_PREFIX),
       )
@@ -122,6 +159,15 @@ export async function syncReminders(profile: Profile | null) {
       identifier: DAILY_ID,
       content: { title: 'Daily Few', body: 'Today’s card is waiting.', data: { url: '/' } },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour, minute },
+    });
+  }
+
+  if (weeklyDigestEnabled()) {
+    await Notifications.scheduleNotificationAsync({
+      identifier: DIGEST_ID,
+      content: { title: 'Daily Few', body: 'Your week is ready.', data: { url: '/week' } },
+      // Weekday 1 is Sunday.
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.WEEKLY, weekday: 1, hour: 18, minute: 0 },
     });
   }
 

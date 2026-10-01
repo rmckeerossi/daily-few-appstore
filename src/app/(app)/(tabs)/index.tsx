@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { Check, Send } from 'lucide-react-native';
+import { Check, ChevronRight, Send, Sparkles } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -29,6 +29,7 @@ import {
   seasonDeck,
 } from '@/lib/data';
 import { checkInShown } from '@/lib/body';
+import { digestOpened, latestDigestWeek, weekHasActivity, weekLabel } from '@/lib/week';
 import { dayLabel, greetingFor, localMonthStart } from '@/lib/dates';
 import { useSession } from '@/lib/session';
 import { shareCard } from '@/lib/share';
@@ -46,10 +47,13 @@ async function loadHome(seasonId: string | null) {
     // A nice-to-have: never let it stop Home from loading.
     getLookingBack().catch(() => null),
   ]);
+  const digestWeek = latestDigestWeek();
+  const weekReady = !digestOpened(digestWeek) && (await weekHasActivity(digestWeek).catch(() => false));
   return {
     card,
     lookingBack,
     showCheckIn: checkInShown(),
+    weekReady: weekReady ? digestWeek : null,
     reflectedDays,
     todayStatus: card ? await answeredToday(card.id) : null,
     monthly: currentMonthlyDeck(decks),
@@ -115,6 +119,24 @@ export default function Home() {
         <Loading />
       ) : (
         <>
+          {data.weekReady ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => router.push({ pathname: '/week', params: { start: data.weekReady! } })}
+              style={({ pressed }) => [styles.weekCard, pressed && { opacity: 0.85 }]}>
+              <Sparkles size={20} color={colors.lilac} strokeWidth={1.5} />
+              <View style={{ flex: 1, gap: 4 }}>
+                <Text style={[type.labelSm, { color: colors.lilac, textTransform: 'uppercase', letterSpacing: 1.4 }]}>
+                  Your week is ready
+                </Text>
+                <Text style={[type.body, { color: colors.textPrimary }]}>
+                  {weekLabel(data.weekReady)}: a look back, and one thing to carry forward.
+                </Text>
+              </View>
+              <ChevronRight size={20} color={colors.textTertiary} strokeWidth={1.5} />
+            </Pressable>
+          ) : null}
+
           <View style={{ gap: 14 }}>
             <Eyebrow>The month so far</Eyebrow>
             <Pressable
@@ -152,7 +174,16 @@ export default function Home() {
             </View>
           ) : null}
 
-          {data.showCheckIn ? <BodyCheckIn /> : null}
+          {data.showCheckIn ? (
+            <View style={{ gap: 12 }}>
+              <BodyCheckIn />
+              <Pressable accessibilityRole="link" onPress={() => router.push('/discoveries')} style={styles.discoveriesLink}>
+                <Sparkles size={14} color={colors.lilac} strokeWidth={1.5} />
+                <Text style={[type.bodySm, { color: colors.lilac }]}>What I know about my body</Text>
+                <ChevronRight size={14} color={colors.lilac} strokeWidth={1.5} />
+              </Pressable>
+            </View>
+          ) : null}
 
           {data.lookingBack ? <LookingBackCard item={data.lookingBack} onOpenAnswer={setOpenAnswer} /> : null}
 
@@ -177,6 +208,17 @@ export default function Home() {
 }
 
 const styles = StyleSheet.create({
+  weekCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    padding: 16,
+    borderRadius: radius.row,
+    backgroundColor: colors.lilacTint,
+    borderWidth: 1,
+    borderColor: 'rgba(209,219,255,0.28)',
+  },
+  discoveriesLink: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingHorizontal: 4 },
   header: { flexDirection: 'row', alignItems: 'flex-start', gap: 16 },
   submark: { width: 30, height: 21, marginTop: 4 },
   labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
