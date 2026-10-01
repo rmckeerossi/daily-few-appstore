@@ -29,7 +29,7 @@ import {
   seasonDeck,
 } from '@/lib/data';
 import { checkInShown } from '@/lib/body';
-import { digestOpened, latestDigestWeek, weekHasActivity, weekLabel } from '@/lib/week';
+import { digestOpened, latestDigestWeek, weekHasActivity } from '@/lib/week';
 import { dayLabel, greetingFor, localMonthStart } from '@/lib/dates';
 import { useSession } from '@/lib/session';
 import { shareCard } from '@/lib/share';
@@ -127,11 +127,9 @@ export default function Home() {
               <Sparkles size={20} color={colors.lilac} strokeWidth={1.5} />
               <View style={{ flex: 1, gap: 4 }}>
                 <Text style={[type.labelSm, { color: colors.lilac, textTransform: 'uppercase', letterSpacing: 1.4 }]}>
-                  Your week is ready
+                  Weekly digest
                 </Text>
-                <Text style={[type.body, { color: colors.textPrimary }]}>
-                  {weekLabel(data.weekReady)}: a look back, and one thing to carry forward.
-                </Text>
+                <Text style={[type.body, { color: colors.textPrimary }]}>Your weekly digest is here. Tap to take a look.</Text>
               </View>
               <ChevronRight size={20} color={colors.textTertiary} strokeWidth={1.5} />
             </Pressable>
