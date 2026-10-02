@@ -34,6 +34,7 @@ import { dayLabel, greetingFor, localMonthStart } from '@/lib/dates';
 import { useSession } from '@/lib/session';
 import { shareCard } from '@/lib/share';
 import { useLoad } from '@/lib/use-load';
+import { useToday } from '@/lib/use-today';
 import { colors, radius, type } from '@/theme/tokens';
 
 const submark = require('@/assets/images/brand/submark-white.png');
@@ -65,7 +66,9 @@ async function loadHome(seasonId: string | null) {
 export default function Home() {
   const { profile } = useSession();
   const toast = useToast();
-  const { data, error, reload, setData } = useLoad(() => loadHome(profile?.season_id ?? null), profile?.season_id ?? '');
+  // A new day reloads Home: a fresh card of the day and a fresh check-in.
+  const today = useToday();
+  const { data, error, reload, setData } = useLoad(() => loadHome(profile?.season_id ?? null), `${profile?.season_id ?? ''}|${today}`);
   const [reflecting, setReflecting] = useState(false);
   const [openAnswer, setOpenAnswer] = useState<string | null>(null);
   const now = new Date();
@@ -174,7 +177,7 @@ export default function Home() {
 
           {data.showCheckIn ? (
             <View style={{ gap: 12 }}>
-              <BodyCheckIn />
+              <BodyCheckIn key={today} day={today} />
               <Pressable accessibilityRole="link" onPress={() => router.push('/discoveries')} style={styles.discoveriesLink}>
                 <Sparkles size={14} color={colors.lilac} strokeWidth={1.5} />
                 <Text style={[type.bodySm, { color: colors.lilac }]}>What I know about my body</Text>

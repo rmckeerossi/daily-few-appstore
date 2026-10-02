@@ -24,8 +24,12 @@ export const SYMPTOM_ICONS: Record<SymptomKey, LucideIcon> = {
   skin: Sparkles,
 };
 
-/** Five taps and done: how the body feels today. Every rating is optional. */
-export function BodyCheckIn() {
+/**
+ * Five taps and done: how the body feels today. Every rating is optional.
+ * `day` is today's date; Home remounts this with a new key each day, so every
+ * day starts with a fresh check-in.
+ */
+export function BodyCheckIn({ day }: { day: string }) {
   const toast = useToast();
   const [values, setValues] = useState<Values>(EMPTY);
   const [saved, setSaved] = useState<Values | null>(null);
@@ -36,7 +40,7 @@ export function BodyCheckIn() {
   const [lastTapped, setLastTapped] = useState<SymptomKey | null>(null);
 
   useEffect(() => {
-    getCheckIn().then(
+    getCheckIn(day).then(
       (c) => {
         if (c) {
           const { day: _day, ...v } = c;
@@ -47,7 +51,7 @@ export function BodyCheckIn() {
       },
       () => setLoaded(true),
     );
-  }, []);
+  }, [day]);
 
   if (!loaded) return null;
 
@@ -63,7 +67,7 @@ export function BodyCheckIn() {
   const save = async () => {
     setSaving(true);
     try {
-      await saveCheckIn(values);
+      await saveCheckIn(values, day);
       setSaved(values);
       setEditing(false);
       toast('Checked in for today.');

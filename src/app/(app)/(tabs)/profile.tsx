@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { LogOut, Pencil, Shield, Sparkles, Trash2 } from 'lucide-react-native';
+import { CalendarDays, LogOut, Pencil, Shield, Sparkles, Trash2 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Alert, Linking, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -250,6 +250,10 @@ export default function Profile() {
             syncReminders(profile);
           }}
         />
+        <Pressable accessibilityRole="link" onPress={() => router.push('/week')} style={styles.accountRow}>
+          <Text style={[type.body, { color: colors.textPrimary, fontSize: 17 }]}>Your weekly digest</Text>
+          <CalendarDays size={20} color={colors.textPrimary} strokeWidth={1.5} />
+        </Pressable>
         <Pressable accessibilityRole="link" onPress={() => router.push('/discoveries')} style={styles.accountRow}>
           <Text style={[type.body, { color: colors.textPrimary, fontSize: 17 }]}>What I know about my body</Text>
           <Sparkles size={20} color={colors.textPrimary} strokeWidth={1.5} />
