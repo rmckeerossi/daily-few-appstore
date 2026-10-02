@@ -7,6 +7,8 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { PrimaryButton, RoundIconButton, TextButton } from '@/components/buttons';
 import { AnswerSheet } from '@/components/answer-sheet';
 import { BodyCheckIn } from '@/components/body-checkin';
+import { DiscoveryCard } from '@/components/discovery-card';
+import { LearnSection } from '@/components/learn-section';
 import { DeckRow } from '@/components/decks';
 import { LookingBackCard } from '@/components/looking-back';
 import { MonthRing } from '@/components/month-ring';
@@ -29,7 +31,7 @@ import {
   seasonDeck,
 } from '@/lib/data';
 import { checkInShown } from '@/lib/body';
-import { digestOpened, latestDigestWeek, weekHasActivity } from '@/lib/week';
+import { digestOpened, getDiscoveries, latestDigestWeek, weekHasActivity } from '@/lib/week';
 import { dayLabel, greetingFor, localMonthStart } from '@/lib/dates';
 import { useSession } from '@/lib/session';
 import { shareCard } from '@/lib/share';
@@ -48,6 +50,8 @@ async function loadHome(seasonId: string | null) {
     // A nice-to-have: never let it stop Home from loading.
     getLookingBack().catch(() => null),
   ]);
+  // Newest first; a nice-to-have, so never let it stop Home from loading.
+  const discoveries = checkInShown() ? await getDiscoveries().catch(() => []) : [];
   const digestWeek = latestDigestWeek();
   const weekReady = !digestOpened(digestWeek) && (await weekHasActivity(digestWeek).catch(() => false));
   return {
@@ -55,6 +59,7 @@ async function loadHome(seasonId: string | null) {
     lookingBack,
     showCheckIn: checkInShown(),
     weekReady: weekReady ? digestWeek : null,
+    discoveries,
     reflectedDays,
     todayStatus: card ? await answeredToday(card.id) : null,
     monthly: currentMonthlyDeck(decks),
@@ -187,13 +192,22 @@ export default function Home() {
           ) : null}
 
           {data.showCheckIn ? (
-            <View style={{ gap: 12 }}>
-              <BodyCheckIn key={today} day={today} />
-              <Pressable accessibilityRole="link" onPress={() => router.push('/discoveries')} style={styles.discoveriesLink}>
-                <Sparkles size={14} color={colors.lilac} strokeWidth={1.5} />
-                <Text style={[type.bodySm, { color: colors.lilac }]}>What I know about my body</Text>
-                <ChevronRight size={14} color={colors.lilac} strokeWidth={1.5} />
-              </Pressable>
+            <BodyCheckIn key={today} day={today} />
+          ) : null}
+
+          <LearnSection day={today} />
+
+          {data.discoveries.length ? (
+            <View style={{ gap: 14 }}>
+              <View style={styles.labelRow}>
+                <Eyebrow>Your newest discovery</Eyebrow>
+                <TextButton
+                  label={`See all ${data.discoveries.length}`}
+                  color={colors.lilac}
+                  onPress={() => router.push('/discoveries')}
+                />
+              </View>
+              <DiscoveryCard discovery={data.discoveries[0]} isNew={data.discoveries[0].isNew} />
             </View>
           ) : null}
 
@@ -233,7 +247,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(209,219,255,0.28)',
   },
-  discoveriesLink: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingHorizontal: 4 },
   header: { flexDirection: 'row', alignItems: 'flex-start', gap: 16 },
   submark: { width: 30, height: 21, marginTop: 4 },
   labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

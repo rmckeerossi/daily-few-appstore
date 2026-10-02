@@ -6,26 +6,7 @@ Status: **draft for Rossi's review.** Fact or fiction and Weird history are heal
 
 ---
 
-## 1. Would you rather
-
-Tap one of two answers, then see how everyone else voted. Votes are anonymous totals; until a question has about 30 votes it says "Be one of the first to vote" instead of showing percentages.
-
-1. A slow morning with nowhere to be, **or** a slow evening with no screens?
-2. Know exactly why you feel off, **or** never feel off again but never know why?
-3. Ten extra minutes of sleep, **or** ten minutes of total quiet?
-4. A long walk alone, **or** a long talk with your best friend?
-5. Cancel plans guilt-free forever, **or** always have the energy to go?
-6. Read your teenage diary out loud, **or** let your teenage self read your texts today?
-7. One perfect night’s sleep every week, guaranteed, **or** no afternoon slump ever again?
-8. Your favourite meal every Sunday, **or** a new restaurant every Friday?
-9. Your best energy at 6am, **or** your best energy at 10pm?
-10. A whole day of being taken care of, **or** a whole day completely alone?
-11. Always know the right thing to say, **or** always know when to say nothing?
-12. Relive your best birthday, **or** skip ahead to see your next one?
-
----
-
-## 2. Fact or fiction
+## 1. Fact or fiction
 
 Swipe right for fact, left for fiction. Instant feedback, one line of truth, and a read to go deeper where there is one.
 
@@ -79,7 +60,7 @@ Swipe right for fact, left for fiction. Instant feedback, one line of truth, and
 
 ---
 
-## 3. Around the world
+## 2. Around the world
 
 One tradition a day from a different place, with a small, gentle way to try it tonight. Nothing medical, nothing to swallow, nothing that needs buying.
 
@@ -133,7 +114,7 @@ One tradition a day from a different place, with a small, gentle way to try it t
 
 ---
 
-## 4. Weird history
+## 3. Weird history
 
 Short, surprising and true, with a quiet point: for centuries, women’s bodies were misunderstood by the system, not failed by the women in them.
 
