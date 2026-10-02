@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { CalendarDays, LogOut, Pencil, Shield, Sparkles, Trash2 } from 'lucide-react-native';
+import { CalendarDays, Compass, LogOut, Pencil, Shield, Sparkles, Trash2 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Alert, Linking, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -28,6 +28,8 @@ import { timeZone } from '@/lib/dates';
 import {
   anniversariesEnabled,
   askForNotifications,
+  DEFAULT_REMINDER_TIME,
+  REMINDER_TIMES,
   setAnniversariesEnabled,
   setWeeklyDigestEnabled,
   syncReminders,
@@ -37,13 +39,8 @@ import { SHARE_HOST } from '@/lib/links';
 import { useSession } from '@/lib/session';
 import { colors, fonts, radius, type } from '@/theme/tokens';
 
-const TIMES = [
-  { value: '07:30', label: '7:30 AM' },
-  { value: '12:30', label: '12:30 PM' },
-  { value: '20:00', label: '8:00 PM' },
-  { value: '21:30', label: '9:30 PM' },
-];
-const DEFAULT_TIME = '20:00';
+const TIMES = REMINDER_TIMES;
+const DEFAULT_TIME = DEFAULT_REMINDER_TIME;
 const PRIVACY_URL = `https://${SHARE_HOST}/privacy`;
 
 const digits = (s: string) => s.replace(/\D/g, '');
@@ -250,6 +247,10 @@ export default function Profile() {
             syncReminders(profile);
           }}
         />
+        <Pressable accessibilityRole="link" onPress={() => router.push('/intro')} style={styles.accountRow}>
+          <Text style={[type.body, { color: colors.textPrimary, fontSize: 17 }]}>Show me around again</Text>
+          <Compass size={20} color={colors.textPrimary} strokeWidth={1.5} />
+        </Pressable>
         <Pressable accessibilityRole="link" onPress={() => router.push('/week')} style={styles.accountRow}>
           <Text style={[type.body, { color: colors.textPrimary, fontSize: 17 }]}>Your weekly digest</Text>
           <CalendarDays size={20} color={colors.textPrimary} strokeWidth={1.5} />

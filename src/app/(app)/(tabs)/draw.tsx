@@ -23,6 +23,7 @@ import {
   type PastAnswer,
 } from '@/lib/data';
 import { monthName, shortDate } from '@/lib/dates';
+import { introSeen } from '@/lib/intro';
 import { useSession } from '@/lib/session';
 import { shareCard } from '@/lib/share';
 import { colors, radius, type } from '@/theme/tokens';
@@ -87,6 +88,14 @@ function DrawSession({ params }: { params: Params }) {
     setDone(null);
     fetchPool(params).then(setPool, () => setError(true));
   };
+
+  // First card after signup: give them a moment with it, then the short intro.
+  const introProfileId = params.welcome && profile && !introSeen(profile.id) ? profile.id : null;
+  useEffect(() => {
+    if (!introProfileId) return;
+    const timer = setTimeout(() => router.push('/intro'), 3000);
+    return () => clearTimeout(timer);
+  }, [introProfileId]);
 
   // Past answers for the card on screen, newest first.
   useEffect(() => {

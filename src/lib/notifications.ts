@@ -107,6 +107,22 @@ export async function askForNotifications(): Promise<boolean> {
 }
 
 /** True if we've never asked, so a gentle ask in context is worth it. */
+/** Daily reminder times offered in Profile and in the intro. */
+export const REMINDER_TIMES = [
+  { value: '07:30', label: '7:30 AM' },
+  { value: '12:30', label: '12:30 PM' },
+  { value: '20:00', label: '8:00 PM' },
+  { value: '21:30', label: '9:30 PM' },
+];
+export const DEFAULT_REMINDER_TIME = '20:00';
+
+/** They've already been asked about reminders (e.g. in the intro): don't offer again. */
+export function markRemindersOffered() {
+  try {
+    localStorage.setItem(OFFERED_KEY, '1');
+  } catch {}
+}
+
 export async function neverAskedForNotifications(): Promise<boolean> {
   const s = await Notifications.getPermissionsAsync();
   return s.status === Notifications.PermissionStatus.UNDETERMINED;

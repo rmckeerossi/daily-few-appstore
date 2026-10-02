@@ -30,7 +30,7 @@ export default function AppLayout() {
   }, [lastResponse]);
 
   // Signup payoff: straight onto the first card, from the deck for their season
-  // (or this month's deck), with no tour first (PRD Flow A step 6).
+  // (or this month's deck). The short intro slides up a few seconds later (draw.tsx).
   useEffect(() => {
     if (!profile) return;
     // Saved on the profile at signup; nothing more to keep on the phone.
@@ -41,7 +41,10 @@ export default function AppLayout() {
     if (shared) {
       clearSharedCard();
       setJustSignedUp(false);
-      router.push({ pathname: '/draw', params: { card: shared, at: String(Date.now()) } });
+      router.push({
+        pathname: '/draw',
+        params: { card: shared, at: String(Date.now()), ...(justSignedUp ? { welcome: '1' } : {}) },
+      });
       return;
     }
     if (!justSignedUp) return;
@@ -66,6 +69,7 @@ export default function AppLayout() {
       <Stack.Screen name="recap" />
       <Stack.Screen name="week" />
       <Stack.Screen name="discoveries" />
+      <Stack.Screen name="intro" options={{ presentation: 'modal' }} />
     </Stack>
   );
 }
