@@ -2,7 +2,7 @@ import * as Notifications from 'expo-notifications';
 import { router, Stack, type Href } from 'expo-router';
 import { useEffect } from 'react';
 
-import { currentMonthlyDeck, getDecks, seasonDeck } from '@/lib/data';
+import { introSeen } from '@/lib/intro';
 import { clearAttribution, clearSharedCard, pendingSharedCard } from '@/lib/links';
 import { syncReminders } from '@/lib/notifications';
 import { useSession } from '@/lib/session';
@@ -29,14 +29,13 @@ export default function AppLayout() {
     if (typeof url === 'string') router.push(url as Href);
   }, [lastResponse]);
 
-  // Signup payoff: straight onto the first card, from the deck for their season
-  // (or this month's deck). The short intro slides up a few seconds later (draw.tsx).
+  // After signup: Home first, then the short intro slides up a moment later.
+  // Arriving from a shared card link: that card comes first (it's why they
+  // came), and the intro follows on the card (draw.tsx).
   useEffect(() => {
     if (!profile) return;
     // Saved on the profile at signup; nothing more to keep on the phone.
     clearAttribution();
-    // Arrived from a shared card link: that card comes first, whether they
-    // just signed up or signed back in.
     const shared = pendingSharedCard();
     if (shared) {
       clearSharedCard();
@@ -48,17 +47,16 @@ export default function AppLayout() {
       return;
     }
     if (!justSignedUp) return;
-    setJustSignedUp(false);
-    getDecks()
-      .then((decks) => {
-        const deck =
-          seasonDeck(decks, profile.season_id) ??
-          currentMonthlyDeck(decks) ??
-          decks.find((d) => d.type === 'library') ??
-          decks[0];
-        if (deck) router.push({ pathname: '/draw', params: { deck: deck.id, welcome: '1', at: String(Date.now()) } });
-      })
-      .catch(() => {});
+    if (introSeen(profile.id)) {
+      setJustSignedUp(false);
+      return;
+    }
+    // Cleared when the intro opens, so this effect re-running doesn't cancel it.
+    const timer = setTimeout(() => {
+      setJustSignedUp(false);
+      router.push('/intro');
+    }, 1200);
+    return () => clearTimeout(timer);
   }, [justSignedUp, profile, setJustSignedUp]);
 
   return (
