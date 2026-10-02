@@ -11,6 +11,7 @@ import { Caption } from '@/components/text';
 import { rememberSignupForApple, signInWithApple, takePendingSignup } from '@/lib/apple';
 import { ageOn, localDate, timeZone } from '@/lib/dates';
 import { pendingAttribution, pendingSharedCard } from '@/lib/links';
+import { isReviewEmail, REVIEW_EMAIL } from '@/lib/review';
 import { useSession } from '@/lib/session';
 import { useSignup } from '@/lib/signup';
 import { supabase } from '@/lib/supabase';
@@ -72,6 +73,12 @@ export default function DetailsStep() {
   const submit = async () => {
     const next: Errors = {};
     const cleanEmail = email.trim().toLowerCase();
+    // App Review's demo account already exists: send it to the password sign-in
+    // instead of emailing a code to an inbox nobody reads.
+    if (isReviewEmail(cleanEmail)) {
+      router.replace({ pathname: '/sign-in', params: { email: REVIEW_EMAIL } });
+      return;
+    }
     if (!cleanEmail) next.email = 'Add your email.';
     else if (!EMAIL.test(cleanEmail)) next.email = 'That email is missing an @.';
     if (!birthday) next.birthday = 'Add your birthday.';

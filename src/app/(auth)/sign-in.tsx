@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Text } from 'react-native';
 
@@ -7,17 +7,17 @@ import { PrimaryButton, TextButton } from '@/components/buttons';
 import { Field } from '@/components/form';
 import { StepScreen } from '@/components/step';
 import { signInWithApple } from '@/lib/apple';
+import { REVIEW_EMAIL } from '@/lib/review';
 import { supabase } from '@/lib/supabase';
 import { colors, type } from '@/theme/tokens';
 
-// App Review can't receive emailed codes, so this one account signs in with a
-// password instead (details go in App Store Connect's review notes). Every
-// other account only ever signs in with a code.
-const REVIEW_EMAIL = 'appreview@dailyfew.com';
+// App Review's demo account signs in with a password (see lib/review.ts).
 
 /** Returning members: email → code. Never creates an account. */
 export default function SignIn() {
-  const [email, setEmail] = useState('');
+  // Arriving from signup with the review email: it's already filled in.
+  const params = useLocalSearchParams<{ email?: string }>();
+  const [email, setEmail] = useState(params.email ?? '');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
