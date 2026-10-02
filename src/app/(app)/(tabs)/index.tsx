@@ -139,13 +139,24 @@ export default function Home() {
           ) : null}
 
           <View style={{ gap: 14 }}>
-            <Eyebrow>The month so far</Eyebrow>
+            <Eyebrow>Your month so far</Eyebrow>
             <Pressable
               accessibilityRole="button"
               accessibilityHint="Opens this month's recap so far"
               onPress={() => router.push({ pathname: '/recap', params: { month: localMonthStart(now).slice(0, 7) } })}>
               <MonthRing today={now} reflectedDays={data.reflectedDays} />
             </Pressable>
+            {/* So the ring reads as days she showed up, not a period tracker. */}
+            <View style={styles.legend} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+              <View style={styles.legendItem}>
+                <View style={[styles.legendDot, { backgroundColor: colors.lilac }]} />
+                <Text style={[type.caption, { color: colors.textTertiary }]}>A day you reflected</Text>
+              </View>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendDot, { borderWidth: 1, borderColor: 'rgba(254,252,242,0.35)' }]} />
+                <Text style={[type.caption, { color: colors.textTertiary }]}>Days still to come</Text>
+              </View>
+            </View>
           </View>
 
           {card ? (
@@ -209,6 +220,9 @@ export default function Home() {
 }
 
 const styles = StyleSheet.create({
+  legend: { flexDirection: 'row', justifyContent: 'center', gap: 18 },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  legendDot: { width: 8, height: 8, borderRadius: 4 },
   weekCard: {
     flexDirection: 'row',
     alignItems: 'center',
